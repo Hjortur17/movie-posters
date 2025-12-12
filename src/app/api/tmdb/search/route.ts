@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [] }, { status: 200 });
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },

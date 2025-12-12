@@ -13,7 +13,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
   }
 
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },

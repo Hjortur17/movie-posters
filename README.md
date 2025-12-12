@@ -24,9 +24,9 @@ npm install
 Create a `.env.local` file in the root directory:
 
 ```env
-NEXT_PUBLIC_TMDB_API_KEY=your_tmdb_api_key
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+TMDB_API_KEY=your_tmdb_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
 KV_REST_API_URL=your_redis_rest_api_url
 KV_REST_API_TOKEN=your_redis_rest_api_token
 ```

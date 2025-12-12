@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
     searchParams.get("date") || new Date().toISOString().split("T")[0];
   const forceNew = searchParams.get("forceNew") === "true"; // For development
 
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },

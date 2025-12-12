@@ -14,7 +14,7 @@ const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
 // Fetch daily movie server-side
 async function fetchDailyMovie(date: Date): Promise<Movie> {
-  const apiKey = process.env.NEXT_PUBLIC_TMDB_API_KEY;
+  const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
     throw new Error("TMDB API key not configured");
   }

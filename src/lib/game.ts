@@ -38,30 +38,6 @@ export function getPixelationLevel(guessNumber: number): number {
   return levels[guessNumber];
 }
 
-export function checkGuess(userGuess: string, correctMovie: Movie): boolean {
-  const normalizedGuess = userGuess
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s]/g, ""); // Remove special characters
-
-  const normalizedTitle = correctMovie.title
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s]/g, "");
-
-  // Only exact match - no partial matches to avoid false positives
-  // (e.g., "Zootopia 2" should not match "Zootopia")
-  return normalizedGuess === normalizedTitle;
-}
-
-// Check if a guessed movie ID matches the correct movie ID
-export function checkGuessById(
-  guessedMovieId: number,
-  correctMovieId: number
-): boolean {
-  return guessedMovieId === correctMovieId;
-}
-
 // Check if two movies are related (same franchise, director, genres, or production company)
 export function areMoviesRelated(
   guess: Guess,

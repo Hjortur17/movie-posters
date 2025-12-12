@@ -3,7 +3,6 @@
 import { useState } from "react"
 import type { GameState } from "@/lib/game"
 import type { Movie } from "@/lib/tmdb"
-import { checkGuess } from "@/lib/game"
 
 interface ShareButtonProps {
   gameState: GameState
@@ -26,12 +25,8 @@ export const ShareButton = ({ gameState, correctMovie }: ShareButtonProps) => {
       if (i < gameState.guesses.length) {
         // Check if this specific guess was correct
         const guess = gameState.guesses[i]
-        // Use movie ID for accurate comparison, fallback to title check for old guesses
-        const isCorrect = guess.movieId 
-          ? guess.movieId === correctMovie.id 
-          : (typeof guess === "string" 
-            ? guess.toLowerCase().trim() === correctMovie.title.toLowerCase().trim()
-            : guess.title.toLowerCase().trim() === correctMovie.title.toLowerCase().trim())
+        // Use movie ID for accurate comparison
+        const isCorrect = guess.movieId === correctMovie.id
         emojis.push(isCorrect ? "🟩" : "🟥")
       } else {
         emojis.push("⬛")

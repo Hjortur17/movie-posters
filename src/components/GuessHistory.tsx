@@ -38,9 +38,14 @@ export const GuessHistory = ({ gameState, correctMovie }: GuessHistoryProps) => 
           statusText = <span className="ml-auto text-yellow-600 font-bold">🔗 Related!</span>
         }
         
+        // Create unique key using movieId if available, otherwise use title + index
+        const uniqueKey = guess.movieId 
+          ? `guess-${guess.movieId}-${index}` 
+          : `guess-${guess.title}-${index}`
+        
         return (
           <div
-            key={index}
+            key={uniqueKey}
             className={`p-3 rounded-md border ${bgClass}`}
           >
             <div className="flex items-center gap-2">

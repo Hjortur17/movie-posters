@@ -88,30 +88,3 @@ export function getPosterUrl(
   }
   return `${TMDB_IMAGE_BASE}${posterPath}`;
 }
-
-// Get a deterministic daily movie based on date
-export async function getDailyMovie(
-  date: Date,
-  forceNew = false
-): Promise<Movie> {
-  // Create a date string in YYYY-MM-DD format
-  const dateString = date.toISOString().split("T")[0];
-
-  // Add forceNew parameter if requested (for development)
-  const forceParam = forceNew ? "&forceNew=true" : "";
-
-  try {
-    const response = await fetch(
-      `/api/tmdb/daily?date=${dateString}${forceParam}`
-    );
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.error || `API error: ${response.status}`);
-    }
-    const movie: Movie = await response.json();
-    return movie;
-  } catch (error) {
-    console.error("Error fetching daily movie:", error);
-    throw error;
-  }
-}

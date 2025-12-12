@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState } from "react"
 import { pixelateImage } from "@/lib/pixelate"
 
 interface MoviePosterProps {
@@ -67,6 +67,8 @@ export const MoviePoster = ({
         alt={alt}
         className="w-full h-full object-contain"
         style={{ imageRendering: pixelationLevel === 0 ? "auto" : "pixelated" }}
+        loading="eager"
+        fetchPriority="high"
       />
     </div>
   )

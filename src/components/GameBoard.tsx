@@ -59,6 +59,23 @@ export const GameBoard = () => {
         const state: ClientGameState = await response.json()
         setGameState(state)
 
+        // Preload the poster image so it's ready immediately
+        if (state.posterUrl) {
+          // Preload using Image object (browser will cache it)
+          const img = new Image()
+          img.src = state.posterUrl
+          
+          // Also add link preload for better browser optimization
+          const existingLink = document.querySelector(`link[href="${state.posterUrl}"]`)
+          if (!existingLink) {
+            const link = document.createElement("link")
+            link.rel = "preload"
+            link.as = "image"
+            link.href = state.posterUrl
+            document.head.appendChild(link)
+          }
+        }
+
         // Only fetch movie details if game is complete
         if (state.isComplete) {
           try {
@@ -120,6 +137,12 @@ export const GameBoard = () => {
 
         const updatedState: ClientGameState = await response.json()
         setGameState(updatedState)
+
+        // Ensure poster is preloaded after state update
+        if (updatedState.posterUrl) {
+          const img = new Image()
+          img.src = updatedState.posterUrl
+        }
 
         // Fetch movie details if game is now complete
         if (updatedState.isComplete) {

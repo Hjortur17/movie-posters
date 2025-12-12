@@ -42,7 +42,7 @@ async function fetchDailyMovie(date: Date): Promise<Movie> {
       url.searchParams.set("vote_average.gte", "4.5");
       url.searchParams.set(
         "primary_release_date.gte",
-        `${minReleaseYear}-01-01`
+        `${minReleaseYear}-01-01`,
       );
       url.searchParams.set("page", page.toString());
 
@@ -112,7 +112,7 @@ async function fetchDailyMovie(date: Date): Promise<Movie> {
     if (creditsResponse.ok) {
       const credits = await creditsResponse.json();
       const director = credits.crew?.find(
-        (person: any) => person.job === "Director"
+        (person: any) => person.job === "Director",
       );
       if (director) {
         movie.director_id = director.id;
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
     if (!anonymousId || !gameId) {
       return NextResponse.json(
         { error: "Missing anonymousId or gameId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -214,7 +214,7 @@ export async function GET(request: NextRequest) {
     console.error("Error getting game state:", error);
     return NextResponse.json(
       { error: "Failed to get game state" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

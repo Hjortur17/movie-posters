@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "@/components/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,7 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CoverQuest - Daily Movie Guessing Game",
-  description: "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
+  description:
+    "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
 };
 
 export default function RootLayout({
@@ -27,7 +29,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <Navbar />
+
+        <main className="container mx-auto px-4 py-8">{children}</main>
       </body>
     </html>
   );

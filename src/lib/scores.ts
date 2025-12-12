@@ -14,7 +14,7 @@ export interface Score {
 
 export async function submitScore(
   gameState: GameState,
-  anonymousId: string
+  anonymousId: string,
 ): Promise<void> {
   const guessNumber = gameState.won ? gameState.currentGuess : 0;
 
@@ -53,7 +53,7 @@ export async function getUserScores(anonymousId: string): Promise<Score[]> {
 
 export async function getLeaderboard(
   gameId: string,
-  limit = 10
+  limit = 10,
 ): Promise<Score[]> {
   const { data, error } = await supabase
     .from("scores")

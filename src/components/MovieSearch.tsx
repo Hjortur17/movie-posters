@@ -1,85 +1,88 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef, useCallback } from "react"
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   InputGroup,
   InputGroupAddon,
   InputGroupButton,
   InputGroupInput,
-} from "@/components/ui/input-group"
-import { searchMovies, type MovieSearchResult } from "@/lib/tmdb"
+} from "@/components/ui/input-group";
+import { searchMovies, type MovieSearchResult } from "@/lib/tmdb";
 
 interface MovieSearchProps {
-  onSelect: (movie: MovieSearchResult) => void
-  disabled?: boolean
+  onSelect: (movie: MovieSearchResult) => void;
+  disabled?: boolean;
 }
 
-export const MovieSearch = ({ onSelect, disabled = false }: MovieSearchProps) => {
-  const [query, setQuery] = useState("")
-  const [suggestions, setSuggestions] = useState<MovieSearchResult[]>([])
-  const [selectedIndex, setSelectedIndex] = useState(-1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [showSuggestions, setShowSuggestions] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
-  const suggestionsRef = useRef<HTMLDivElement>(null)
+export const MovieSearch = ({
+  onSelect,
+  disabled = false,
+}: MovieSearchProps) => {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<MovieSearchResult[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   // Debounced search
   useEffect(() => {
     if (!query.trim()) {
-      setSuggestions([])
-      setShowSuggestions(false)
-      return
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
     }
 
     const timeoutId = setTimeout(async () => {
-      setIsLoading(true)
+      setIsLoading(true);
       try {
-        const results = await searchMovies(query)
-        setSuggestions(results.slice(0, 5)) // Limit to 5 suggestions
-        setShowSuggestions(true)
-        setSelectedIndex(-1)
+        const results = await searchMovies(query);
+        setSuggestions(results.slice(0, 5)); // Limit to 5 suggestions
+        setShowSuggestions(true);
+        setSelectedIndex(-1);
       } catch (error) {
-        console.error("Error searching movies:", error)
-        setSuggestions([])
+        console.error("Error searching movies:", error);
+        setSuggestions([]);
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }, 300)
+    }, 300);
 
-    return () => clearTimeout(timeoutId)
-  }, [query])
+    return () => clearTimeout(timeoutId);
+  }, [query]);
 
   const handleSelect = useCallback(
     (movie: MovieSearchResult) => {
-      setQuery("")
-      setSuggestions([])
-      setShowSuggestions(false)
-      onSelect(movie)
+      setQuery("");
+      setSuggestions([]);
+      setShowSuggestions(false);
+      onSelect(movie);
     },
-    [onSelect]
-  )
+    [onSelect],
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (disabled) return
+    if (disabled) return;
 
     if (e.key === "ArrowDown") {
-      e.preventDefault()
+      e.preventDefault();
       setSelectedIndex((prev) =>
-        prev < suggestions.length - 1 ? prev + 1 : prev
-      )
+        prev < suggestions.length - 1 ? prev + 1 : prev,
+      );
     } else if (e.key === "ArrowUp") {
-      e.preventDefault()
-      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1))
+      e.preventDefault();
+      setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === "Enter") {
-      e.preventDefault()
+      e.preventDefault();
       if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-        handleSelect(suggestions[selectedIndex])
+        handleSelect(suggestions[selectedIndex]);
       }
     } else if (e.key === "Escape") {
-      setShowSuggestions(false)
-      inputRef.current?.blur()
+      setShowSuggestions(false);
+      inputRef.current?.blur();
     }
-  }
+  };
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -90,13 +93,13 @@ export const MovieSearch = ({ onSelect, disabled = false }: MovieSearchProps) =>
         inputRef.current &&
         !inputRef.current.contains(event.target as Node)
       ) {
-        setShowSuggestions(false)
+        setShowSuggestions(false);
       }
-    }
+    };
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   return (
     <div className="relative w-full">
@@ -110,7 +113,7 @@ export const MovieSearch = ({ onSelect, disabled = false }: MovieSearchProps) =>
           onKeyDown={handleKeyDown}
           onFocus={() => {
             if (suggestions.length > 0) {
-              setShowSuggestions(true)
+              setShowSuggestions(true);
             }
           }}
           disabled={disabled}
@@ -151,5 +154,5 @@ export const MovieSearch = ({ onSelect, disabled = false }: MovieSearchProps) =>
         </div>
       )}
     </div>
-  )
-}
+  );
+};

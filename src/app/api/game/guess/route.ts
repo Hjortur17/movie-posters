@@ -44,7 +44,7 @@ async function fetchMovieDetails(movieId: number): Promise<Movie> {
   if (creditsResponse?.ok) {
     const credits = await creditsResponse.json();
     const director = credits.crew?.find(
-      (person: any) => person.job === "Director"
+      (person: any) => person.job === "Director",
     );
     if (director) {
       movie.director_id = director.id;
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     if (!anonymousId || !gameId || !guess) {
       return NextResponse.json(
         { error: "Missing required fields" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest) {
     if (currentState.isComplete) {
       return NextResponse.json(
         { error: "Game already complete" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -162,7 +162,7 @@ export async function POST(request: NextRequest) {
     console.error("Error processing guess:", error);
     return NextResponse.json(
       { error: "Failed to process guess" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

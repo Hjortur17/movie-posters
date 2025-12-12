@@ -47,7 +47,7 @@ export function areMoviesRelated(
     director_id?: number;
     genres?: Array<{ id: number }>;
     production_companies?: Array<{ id: number }>;
-  }
+  },
 ): boolean {
   // Same franchise/collection
   if (
@@ -71,7 +71,7 @@ export function areMoviesRelated(
   if (guess.genreIds && guess.genreIds.length > 0 && correctMovie.genres) {
     const correctGenreIds = correctMovie.genres.map((g) => g.id);
     const commonGenres = guess.genreIds.filter((id) =>
-      correctGenreIds.includes(id)
+      correctGenreIds.includes(id),
     );
     if (commonGenres.length >= 2) {
       return true;
@@ -85,10 +85,10 @@ export function areMoviesRelated(
     correctMovie.production_companies
   ) {
     const correctCompanyIds = correctMovie.production_companies.map(
-      (c) => c.id
+      (c) => c.id,
     );
     const hasCommonCompany = guess.productionCompanyIds.some((id) =>
-      correctCompanyIds.includes(id)
+      correctCompanyIds.includes(id),
     );
     if (hasCommonCompany) {
       return true;
@@ -100,7 +100,7 @@ export function areMoviesRelated(
 
 export function calculateScore(
   guessNumber: number,
-  isCorrect: boolean
+  isCorrect: boolean,
 ): number {
   if (!isCorrect) {
     return 0;
@@ -116,7 +116,7 @@ export function calculateScore(
 
 export function createInitialGameState(
   gameId: string,
-  movie: Movie
+  movie: Movie,
 ): GameState {
   return {
     gameId,
@@ -133,7 +133,7 @@ export function createInitialGameState(
 export function updateGameState(
   state: GameState,
   guess: Guess,
-  isCorrect: boolean
+  isCorrect: boolean,
 ): GameState {
   const newGuesses = [...state.guesses, guess];
   const newGuessNumber = state.currentGuess + 1;

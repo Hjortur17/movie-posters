@@ -2,15 +2,15 @@ import { GameBoard } from "@/components/GameBoard";
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black px-4 py-8">
+    <div className="flex min-h-screen items-center justify-center font-sans px-4 py-8">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl mb-2 font-black tracking-tight uppercase">
             CoverQuest
           </h1>
           <p className="text-gray-600">
-            Guess the movie from the pixelated poster. You get 5 guesses, and the image
-            gets clearer with each one!
+            Guess the movie from the pixelated poster. You get 5 guesses, and
+            the image gets clearer with each one!
           </p>
         </div>
 

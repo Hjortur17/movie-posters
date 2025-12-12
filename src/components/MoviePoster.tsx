@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { pixelateImage } from "@/lib/pixelate"
+import { useEffect, useState } from "react";
+import { pixelateImage } from "@/lib/pixelate";
 
 interface MoviePosterProps {
-  imageUrl: string | null
-  pixelationLevel: number
-  alt?: string
+  imageUrl: string | null;
+  pixelationLevel: number;
+  alt?: string;
 }
 
 export const MoviePoster = ({
@@ -14,42 +14,42 @@ export const MoviePoster = ({
   pixelationLevel,
   alt = "Movie poster",
 }: MoviePosterProps) => {
-  const [pixelatedUrl, setPixelatedUrl] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [pixelatedUrl, setPixelatedUrl] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!imageUrl) {
-      setPixelatedUrl(null)
-      setIsLoading(false)
-      return
+      setPixelatedUrl(null);
+      setIsLoading(false);
+      return;
     }
 
     // If pixelation level is 0, show the original image directly
     if (pixelationLevel === 0) {
-      setPixelatedUrl(imageUrl)
-      setIsLoading(false)
-      return
+      setPixelatedUrl(imageUrl);
+      setIsLoading(false);
+      return;
     }
 
-    setIsLoading(true)
+    setIsLoading(true);
     pixelateImage(imageUrl, pixelationLevel)
       .then((dataUrl) => {
-        setPixelatedUrl(dataUrl)
-        setIsLoading(false)
+        setPixelatedUrl(dataUrl);
+        setIsLoading(false);
       })
       .catch((error) => {
-        console.error("Error pixelating image:", error)
-        setPixelatedUrl(imageUrl)
-        setIsLoading(false)
-      })
-  }, [imageUrl, pixelationLevel])
+        console.error("Error pixelating image:", error);
+        setPixelatedUrl(imageUrl);
+        setIsLoading(false);
+      });
+  }, [imageUrl, pixelationLevel]);
 
   if (!imageUrl) {
     return (
       <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">No poster available</span>
       </div>
-    )
+    );
   }
 
   if (isLoading) {
@@ -57,7 +57,7 @@ export const MoviePoster = ({
       <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">Loading...</span>
       </div>
-    )
+    );
   }
 
   return (
@@ -71,5 +71,5 @@ export const MoviePoster = ({
         fetchPriority="high"
       />
     </div>
-  )
-}
+  );
+};

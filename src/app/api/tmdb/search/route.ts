@@ -14,13 +14,13 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
   try {
     const url = `${TMDB_API_BASE}/search/movie?query=${encodeURIComponent(
-      query
+      query,
     )}&page=1`;
     const response = await fetch(url, {
       headers: {
@@ -34,14 +34,14 @@ export async function GET(request: NextRequest) {
       console.error("TMDB API error:", response.status, errorText);
       return NextResponse.json(
         { error: `TMDB API error: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     const data = await response.json();
     // Filter to only return movies with posters
     const results = data.results.filter(
-      (movie: { poster_path: string | null }) => movie.poster_path
+      (movie: { poster_path: string | null }) => movie.poster_path,
     );
 
     return NextResponse.json({ results });
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
     console.error("Error searching movies:", error);
     return NextResponse.json(
       { error: "Failed to search movies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

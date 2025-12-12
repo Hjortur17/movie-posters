@@ -1,78 +1,82 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { getDailyGameId, getPixelationLevel, type GameState } from "@/lib/game"
-import { getAnonymousId } from "@/lib/user"
-import { MovieSearch } from "./MovieSearch"
-import { MoviePoster } from "./MoviePoster"
-import { GuessHistory } from "./GuessHistory"
-import { ScoreDisplay } from "./ScoreDisplay"
-import type { MovieSearchResult } from "@/lib/tmdb"
-import type { Movie } from "@/lib/tmdb"
+import { useState, useEffect, useCallback } from "react";
+import { getDailyGameId, getPixelationLevel, type GameState } from "@/lib/game";
+import { getAnonymousId } from "@/lib/user";
+import { MovieSearch } from "./MovieSearch";
+import { MoviePoster } from "./MoviePoster";
+import { GuessHistory } from "./GuessHistory";
+import { ScoreDisplay } from "./ScoreDisplay";
+import type { MovieSearchResult } from "@/lib/tmdb";
+import type { Movie } from "@/lib/tmdb";
 
 // Client-safe game state from API
 interface ClientGameState {
-  gameId: string
+  gameId: string;
   guesses: Array<{
-    title: string
-    year?: number
-    collectionId?: number | null
-    movieId?: number
-    directorId?: number | null
-    genreIds?: number[]
-    productionCompanyIds?: number[]
-  }>
-  currentGuess: number
-  isComplete: boolean
-  won: boolean
-  score: number
-  posterUrl: string | null
+    title: string;
+    year?: number;
+    collectionId?: number | null;
+    movieId?: number;
+    directorId?: number | null;
+    genreIds?: number[];
+    productionCompanyIds?: number[];
+  }>;
+  currentGuess: number;
+  isComplete: boolean;
+  won: boolean;
+  score: number;
+  posterUrl: string | null;
 }
 
 export const GameBoard = () => {
-  const [gameState, setGameState] = useState<ClientGameState | null>(null)
-  const [currentMovie, setCurrentMovie] = useState<Movie | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [gameState, setGameState] = useState<ClientGameState | null>(null);
+  const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load game state from server
   useEffect(() => {
     const initializeGame = async () => {
       try {
-        setIsLoading(true)
-        setError(null)
+        setIsLoading(true);
+        setError(null);
 
-        const today = new Date()
-        const gameId = getDailyGameId(today)
-        const anonymousId = getAnonymousId()
+        const today = new Date();
+        const gameId = getDailyGameId(today);
+        const anonymousId = getAnonymousId();
 
         // Fetch game state from server
         const response = await fetch(
-          `/api/game/state?anonymousId=${encodeURIComponent(anonymousId)}&gameId=${encodeURIComponent(gameId)}`
-        )
+          `/api/game/state?anonymousId=${encodeURIComponent(anonymousId)}&gameId=${encodeURIComponent(gameId)}`,
+        );
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || `Failed to load game: ${response.status}`)
+          const errorData = await response.json();
+          throw new Error(
+            errorData.error || `Failed to load game: ${response.status}`,
+          );
         }
 
-        const state: ClientGameState = await response.json()
-        setGameState(state)
+        const state: ClientGameState = await response.json();
+        setGameState(state);
 
         // Preload the poster image so it's ready immediately
         if (state.posterUrl) {
           // Preload using Image object (browser will cache it)
-          const img = new Image()
-          img.src = state.posterUrl
-          
+          const img = new Image();
+          img.src = state.posterUrl;
+
           // Also add link preload for better browser optimization
-          const existingLink = document.querySelector(`link[href="${state.posterUrl}"]`)
+          const existingLink = document.querySelector(
+            `link[href="${state.posterUrl}"]`,
+          );
           if (!existingLink) {
-            const link = document.createElement("link")
-            link.rel = "preload"
-            link.as = "image"
-            link.href = state.posterUrl
-            document.head.appendChild(link)
+            const link = document.createElement("link");
+            link.rel = "preload";
+            link.as = "image";
+            link.href = state.posterUrl;
+            document.head.appendChild(link);
           }
         }
 
@@ -80,39 +84,41 @@ export const GameBoard = () => {
         if (state.isComplete) {
           try {
             const movieResponse = await fetch(
-              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`
-            )
+              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`,
+            );
             if (movieResponse.ok) {
-              const movie: Movie = await movieResponse.json()
-              setCurrentMovie(movie)
+              const movie: Movie = await movieResponse.json();
+              setCurrentMovie(movie);
             }
           } catch (err) {
-            console.error("Error fetching movie details:", err)
+            console.error("Error fetching movie details:", err);
           }
         }
       } catch (err) {
-        console.error("Error initializing game:", err)
+        console.error("Error initializing game:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to load game. Please try again."
-        )
+          err instanceof Error
+            ? err.message
+            : "Failed to load game. Please try again.",
+        );
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
+    };
 
-    initializeGame()
-  }, [])
+    initializeGame();
+  }, []);
 
   const handleMovieSelect = useCallback(
     async (selectedMovie: MovieSearchResult) => {
       if (!gameState || gameState.isComplete) {
-        return
+        return;
       }
 
       try {
-        const today = new Date()
-        const gameId = getDailyGameId(today)
-        const anonymousId = getAnonymousId()
+        const today = new Date();
+        const gameId = getDailyGameId(today);
+        const anonymousId = getAnonymousId();
 
         // Submit guess to server
         const response = await fetch("/api/game/guess", {
@@ -128,45 +134,47 @@ export const GameBoard = () => {
               movieId: selectedMovie.id,
             },
           }),
-        })
+        });
 
         if (!response.ok) {
-          const errorData = await response.json()
-          throw new Error(errorData.error || "Failed to submit guess")
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to submit guess");
         }
 
-        const updatedState: ClientGameState = await response.json()
-        setGameState(updatedState)
+        const updatedState: ClientGameState = await response.json();
+        setGameState(updatedState);
 
         // Ensure poster is preloaded after state update
         if (updatedState.posterUrl) {
-          const img = new Image()
-          img.src = updatedState.posterUrl
+          const img = new Image();
+          img.src = updatedState.posterUrl;
         }
 
         // Fetch movie details if game is now complete
         if (updatedState.isComplete) {
           try {
             const movieResponse = await fetch(
-              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`
-            )
+              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`,
+            );
             if (movieResponse.ok) {
-              const movie: Movie = await movieResponse.json()
-              setCurrentMovie(movie)
+              const movie: Movie = await movieResponse.json();
+              setCurrentMovie(movie);
             }
           } catch (err) {
-            console.error("Error fetching movie details:", err)
+            console.error("Error fetching movie details:", err);
           }
         }
       } catch (err) {
-        console.error("Error submitting guess:", err)
+        console.error("Error submitting guess:", err);
         setError(
-          err instanceof Error ? err.message : "Failed to submit guess. Please try again."
-        )
+          err instanceof Error
+            ? err.message
+            : "Failed to submit guess. Please try again.",
+        );
       }
     },
-    [gameState]
-  )
+    [gameState],
+  );
 
   if (isLoading) {
     return (
@@ -176,7 +184,7 @@ export const GameBoard = () => {
           <div className="text-sm text-gray-500">Please wait</div>
         </div>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -193,15 +201,17 @@ export const GameBoard = () => {
           </button>
         </div>
       </div>
-    )
+    );
   }
 
   if (!gameState) {
-    return null
+    return null;
   }
 
   // Show unfiltered image (0% pixelation) when game is complete, otherwise use progressive pixelation
-  const pixelationLevel = gameState.isComplete ? 0 : getPixelationLevel(gameState.currentGuess)
+  const pixelationLevel = gameState.isComplete
+    ? 0
+    : getPixelationLevel(gameState.currentGuess);
 
   // Convert client state to GameState for components that need it
   const gameStateForComponents: GameState = {
@@ -213,7 +223,7 @@ export const GameBoard = () => {
     isComplete: gameState.isComplete,
     won: gameState.won,
     score: gameState.score,
-  }
+  };
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -229,16 +239,25 @@ export const GameBoard = () => {
           <p className="text-sm text-gray-600 mb-2">
             Guess {gameState.currentGuess + 1} of 5
           </p>
-          <MovieSearch onSelect={handleMovieSelect} disabled={gameState.isComplete} />
+          <MovieSearch
+            onSelect={handleMovieSelect}
+            disabled={gameState.isComplete}
+          />
         </div>
       )}
 
       {gameState.guesses.length > 0 && currentMovie && (
-        <GuessHistory gameState={gameStateForComponents} correctMovie={currentMovie} />
+        <GuessHistory
+          gameState={gameStateForComponents}
+          correctMovie={currentMovie}
+        />
       )}
 
       {currentMovie && (
-        <ScoreDisplay gameState={gameStateForComponents} correctMovie={currentMovie} />
+        <ScoreDisplay
+          gameState={gameStateForComponents}
+          correctMovie={currentMovie}
+        />
       )}
 
       {gameState.isComplete && !gameState.won && currentMovie && (
@@ -253,5 +272,5 @@ export const GameBoard = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};

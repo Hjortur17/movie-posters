@@ -1,33 +1,36 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import type { GameState } from "@/lib/game"
-import type { Movie } from "@/lib/tmdb"
-import { ShareButton } from "./ShareButton"
+import { useState, useEffect } from "react";
+import type { GameState } from "@/lib/game";
+import type { Movie } from "@/lib/tmdb";
+import { ShareButton } from "./ShareButton";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
-} from "./ui/dialog"
+} from "./ui/dialog";
 
 interface ScoreDisplayProps {
-  gameState: GameState
-  correctMovie: Movie
+  gameState: GameState;
+  correctMovie: Movie;
 }
 
-export const ScoreDisplay = ({ gameState, correctMovie }: ScoreDisplayProps) => {
-  const [isOpen, setIsOpen] = useState(false)
+export const ScoreDisplay = ({
+  gameState,
+  correctMovie,
+}: ScoreDisplayProps) => {
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     if (gameState.isComplete && gameState.won) {
-      setIsOpen(true)
+      setIsOpen(true);
     }
-  }, [gameState.isComplete, gameState.won])
+  }, [gameState.isComplete, gameState.won]);
 
   if (!gameState.isComplete) {
-    return null
+    return null;
   }
 
   return (
@@ -68,5 +71,5 @@ export const ScoreDisplay = ({ gameState, correctMovie }: ScoreDisplayProps) => 
         </div>
       )}
     </>
-  )
-}
+  );
+};

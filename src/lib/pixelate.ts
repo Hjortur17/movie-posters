@@ -1,6 +1,6 @@
 export function pixelateImage(
   imageUrl: string,
-  pixelationLevel: number
+  pixelationLevel: number,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();

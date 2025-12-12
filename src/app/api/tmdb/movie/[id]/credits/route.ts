@@ -4,7 +4,7 @@ const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const movieId = parseInt(id, 10);
@@ -17,7 +17,7 @@ export async function GET(
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -35,14 +35,14 @@ export async function GET(
       console.error("TMDB API error:", response.status, errorText);
       return NextResponse.json(
         { error: `TMDB API error: ${response.status}` },
-        { status: response.status }
+        { status: response.status },
       );
     }
 
     const credits = await response.json();
     // Find director (job === "Director")
     const director = credits.crew?.find(
-      (person: { job: string }) => person.job === "Director"
+      (person: { job: string }) => person.job === "Director",
     );
 
     return NextResponse.json({
@@ -52,7 +52,7 @@ export async function GET(
     console.error("Error fetching movie credits:", error);
     return NextResponse.json(
       { error: "Failed to fetch movie credits" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

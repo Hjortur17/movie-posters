@@ -18,9 +18,9 @@ import { ScoreDisplay } from "./ScoreDisplay";
 import type { MovieSearchResult } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
 
-const GAME_STATE_KEY = "coverquest_game_state";
-const CURRENT_MOVIE_KEY = "coverquest_current_movie";
-const POSTER_URL_KEY = "coverquest_poster_url";
+const GAME_STATE_KEY = "posterquest_game_state";
+const CURRENT_MOVIE_KEY = "posterquest_current_movie";
+const POSTER_URL_KEY = "posterquest_poster_url";
 
 export const GameBoard = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);

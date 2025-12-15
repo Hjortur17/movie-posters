@@ -1,4 +1,4 @@
-const ANONYMOUS_ID_KEY = "coverquest_anonymous_id";
+const ANONYMOUS_ID_KEY = "posterquest_anonymous_id";
 
 export function getAnonymousId(): string {
   if (typeof window === "undefined") {
@@ -21,5 +21,3 @@ export function generateAnonymousId(): string {
     return v.toString(16);
   });
 }
-
-

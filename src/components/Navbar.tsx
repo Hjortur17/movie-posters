@@ -4,7 +4,7 @@ export const Navbar = () => {
   return (
     <nav className="absolute top-0 inset-x-0">
       <div className="container mx-auto px-4 py-4 flex items-end justify-between">
-        <h1 className="text-2xl font-bold">CoverQuest</h1>
+        <h1 className="text-2xl font-bold">PosterQuest</h1>
 
         <Link
           href="https://hjorturfreyr.com"

@@ -1,4 +1,4 @@
--- CoverQuest Supabase Database Schema
+-- PosterQuest Supabase Database Schema
 -- Run this SQL in your Supabase SQL Editor to create the scores table
 
 -- Create the scores table

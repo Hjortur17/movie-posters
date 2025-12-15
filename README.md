@@ -1,4 +1,4 @@
-# CoverQuest
+# PosterQuest
 
 A daily movie guessing game where you try to identify a movie from a progressively clearer pixelated poster. You get 5 guesses, and the image gets clearer with each one!
 
@@ -88,9 +88,9 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 4. **Sharing**: After completing a game, you can share your score with an emoji grid showing your guesses:
    ```
-   #CoverQuest #1053
+   #PosterQuest #1053
    🟥🟩⬛⬛⬛ 🎉 2/5
-   https://coverquest.jbonet.xyz
+   https://your-vercel-url.vercel.app
    ```
 
 ## Tech Stack

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CoverQuest - Daily Movie Guessing Game",
+  title: "PosterQuest - Daily Movie Guessing Game",
   description:
     "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
 };

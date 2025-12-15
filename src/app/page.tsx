@@ -6,7 +6,7 @@ export default function Home() {
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <h1 className="text-4xl mb-2 font-black tracking-tight uppercase">
-            CoverQuest
+            PosterQuest
           </h1>
           <p className="text-gray-600">
             Guess the movie from the pixelated poster. You get 5 guesses, and

@@ -39,7 +39,23 @@ export const ShareButton = ({ gameState, correctMovie }: ShareButtonProps) => {
       ? `🎉 ${gameState.currentGuess}/5`
       : "❌ 0/5";
 
-    return `#CoverQuest #${dayNumber}\n${emojiGrid} ${scoreText}\nhttps://coverquest.jbonet.xyz`;
+    // Get URL from Vercel environment variables or current location
+    // Client-side component, so use NEXT_PUBLIC_ prefixed vars or window.location
+    const baseUrl =
+      process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ||
+      (typeof window !== "undefined"
+        ? window.location.hostname +
+          (window.location.port ? `:${window.location.port}` : "")
+        : "localhost:3000");
+
+    const isProduction =
+      process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ||
+      (typeof window !== "undefined" && window.location.protocol === "https:");
+
+    const protocol = isProduction ? "https" : "http";
+    const url = `${protocol}://${baseUrl}`;
+
+    return `#PosterQuest #${dayNumber}\n${emojiGrid} ${scoreText}\n${url}`;
   };
 
   const handleShare = async () => {
@@ -56,7 +72,7 @@ export const ShareButton = ({ gameState, correctMovie }: ShareButtonProps) => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       }
-    } catch (error) {
+    } catch {
       // If sharing fails, try clipboard
       try {
         await navigator.clipboard.writeText(shareText);

@@ -59,3 +59,5 @@ export function pixelateImage(
     img.src = imageUrl;
   });
 }
+
+

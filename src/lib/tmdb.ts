@@ -31,7 +31,7 @@ export interface MovieSearchResult {
 }
 
 export async function searchMovies(
-  query: string,
+  query: string
 ): Promise<MovieSearchResult[]> {
   if (!query.trim()) {
     return [];
@@ -39,7 +39,7 @@ export async function searchMovies(
 
   try {
     const response = await fetch(
-      `/api/tmdb/search?query=${encodeURIComponent(query)}`,
+      `/api/tmdb/search?query=${encodeURIComponent(query)}`
     );
     if (!response.ok) {
       const error = await response.json();
@@ -81,10 +81,37 @@ export async function getMovieDetails(movieId: number): Promise<Movie> {
 }
 
 export function getPosterUrl(
-  posterPath: string | null | undefined,
+  posterPath: string | null | undefined
 ): string | null {
   if (!posterPath) {
     return null;
   }
   return `${TMDB_IMAGE_BASE}${posterPath}`;
+}
+
+// Get a deterministic daily movie based on date
+export async function getDailyMovie(
+  date: Date,
+  forceNew = false
+): Promise<Movie> {
+  // Create a date string in YYYY-MM-DD format
+  const dateString = date.toISOString().split("T")[0];
+
+  // Add forceNew parameter if requested (for development)
+  const forceParam = forceNew ? "&forceNew=true" : "";
+
+  try {
+    const response = await fetch(
+      `/api/tmdb/daily?date=${dateString}${forceParam}`
+    );
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `API error: ${response.status}`);
+    }
+    const movie: Movie = await response.json();
+    return movie;
+  } catch (error) {
+    console.error("Error fetching daily movie:", error);
+    throw error;
+  }
 }

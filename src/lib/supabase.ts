@@ -1,19 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
 
-const getSupabaseUrl = (): string => {
-  const url = process.env.SUPABASE_URL;
-  if (!url) {
-    throw new Error("SUPABASE_URL is not set");
-  }
-  return url;
+const getSupabaseUrl = (): string | null => {
+  return (
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || null
+  );
 };
 
-const getSupabaseAnonKey = (): string => {
-  const key = process.env.SUPABASE_ANON_KEY;
-  if (!key) {
-    throw new Error("SUPABASE_ANON_KEY is not set");
-  }
-  return key;
+const getSupabaseAnonKey = (): string | null => {
+  return (
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+    null
+  );
 };
 
-export const supabase = createClient(getSupabaseUrl(), getSupabaseAnonKey());
+// Only create Supabase client if credentials are available
+const supabaseUrl = getSupabaseUrl();
+const supabaseKey = getSupabaseAnonKey();
+
+export const supabase =
+  supabaseUrl && supabaseKey ? createClient(supabaseUrl, supabaseKey) : null;

@@ -38,7 +38,8 @@ export function getPixelationLevel(guessNumber: number): number {
   return levels[guessNumber];
 }
 
-// Check if two movies are related (same franchise, director, genres, or production company)
+// Check if two movies are related (same franchise, director, or significant genre overlap)
+// Made stricter to avoid false positives
 export function areMoviesRelated(
   guess: Guess,
   correctMovie: {
@@ -47,60 +48,55 @@ export function areMoviesRelated(
     director_id?: number;
     genres?: Array<{ id: number }>;
     production_companies?: Array<{ id: number }>;
-  },
+  }
 ): boolean {
-  // Same franchise/collection
+  // Same franchise/collection - strongest relationship
   if (
     guess.collectionId !== null &&
+    guess.collectionId !== undefined &&
     correctMovie.belongs_to_collection?.id &&
     guess.collectionId === correctMovie.belongs_to_collection.id
   ) {
     return true;
   }
 
-  // Same director
+  // Same director - strong relationship
   if (
     guess.directorId !== null &&
+    guess.directorId !== undefined &&
     correctMovie.director_id &&
     guess.directorId === correctMovie.director_id
   ) {
     return true;
   }
 
-  // Shared genres (at least 2 common genres)
-  if (guess.genreIds && guess.genreIds.length > 0 && correctMovie.genres) {
+  // Shared genres - require at least 3 common genres to avoid false positives
+  // Many blockbuster movies share common genres (Action, Adventure, etc.)
+  if (
+    guess.genreIds &&
+    guess.genreIds.length > 0 &&
+    correctMovie.genres &&
+    correctMovie.genres.length > 0
+  ) {
     const correctGenreIds = correctMovie.genres.map((g) => g.id);
     const commonGenres = guess.genreIds.filter((id) =>
-      correctGenreIds.includes(id),
+      correctGenreIds.includes(id)
     );
-    if (commonGenres.length >= 2) {
+    // Require at least 3 common genres to be considered related
+    if (commonGenres.length >= 3) {
       return true;
     }
   }
 
-  // Same production company
-  if (
-    guess.productionCompanyIds &&
-    guess.productionCompanyIds.length > 0 &&
-    correctMovie.production_companies
-  ) {
-    const correctCompanyIds = correctMovie.production_companies.map(
-      (c) => c.id,
-    );
-    const hasCommonCompany = guess.productionCompanyIds.some((id) =>
-      correctCompanyIds.includes(id),
-    );
-    if (hasCommonCompany) {
-      return true;
-    }
-  }
+  // Production company check removed - too many false positives
+  // Major studios produce many unrelated movies
 
   return false;
 }
 
 export function calculateScore(
   guessNumber: number,
-  isCorrect: boolean,
+  isCorrect: boolean
 ): number {
   if (!isCorrect) {
     return 0;
@@ -116,7 +112,7 @@ export function calculateScore(
 
 export function createInitialGameState(
   gameId: string,
-  movie: Movie,
+  movie: Movie
 ): GameState {
   return {
     gameId,
@@ -133,7 +129,7 @@ export function createInitialGameState(
 export function updateGameState(
   state: GameState,
   guess: Guess,
-  isCorrect: boolean,
+  isCorrect: boolean
 ): GameState {
   const newGuesses = [...state.guesses, guess];
   const newGuessNumber = state.currentGuess + 1;

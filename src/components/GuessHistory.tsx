@@ -6,7 +6,7 @@ import { areMoviesRelated } from "@/lib/game";
 
 interface GuessHistoryProps {
   gameState: GameState;
-  correctMovie: Movie;
+  correctMovie?: Movie;
 }
 
 export const GuessHistory = ({
@@ -21,17 +21,25 @@ export const GuessHistory = ({
     <div className="mt-6 space-y-2">
       <h3 className="text-lg font-semibold mb-3">Your Guesses</h3>
       {gameState.guesses.map((guess, index) => {
-        // Use movie ID for accurate comparison, fallback to title check for old guesses without movieId
-        const isCorrect = guess.movieId
-          ? guess.movieId === correctMovie.id
-          : guess.title.toLowerCase().trim() ===
-            correctMovie.title.toLowerCase().trim();
+        // Only show correct/related status if we have the correct movie (game is complete)
+        let isCorrect = false;
+        let isRelated = false;
 
-        // Check if movies are related (same franchise, director, genres, or production company)
-        const isRelated = !isCorrect && areMoviesRelated(guess, correctMovie);
+        if (correctMovie) {
+          // Use movie ID for accurate comparison, fallback to title check for old guesses without movieId
+          isCorrect = guess.movieId
+            ? guess.movieId === correctMovie.id
+            : guess.title.toLowerCase().trim() ===
+              correctMovie.title.toLowerCase().trim();
 
-        // Determine styling: green for correct, yellow for related, red for wrong
-        let bgClass = "bg-red-50 border-red-200 text-red-900";
+          // Check if movies are related (same franchise, director, genres, or production company)
+          isRelated = !isCorrect && areMoviesRelated(guess, correctMovie);
+        }
+
+        // Determine styling: green for correct, yellow for related, red for wrong, gray during game
+        let bgClass = correctMovie
+          ? "bg-red-50 border-red-200 text-red-900"
+          : "bg-gray-50 border-gray-200 text-gray-900";
         let statusText = null;
 
         if (isCorrect) {

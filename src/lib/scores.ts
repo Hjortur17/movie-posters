@@ -14,8 +14,13 @@ export interface Score {
 
 export async function submitScore(
   gameState: GameState,
-  anonymousId: string,
+  anonymousId: string
 ): Promise<void> {
+  if (!supabase) {
+    console.warn("Supabase not configured, skipping score submission");
+    return;
+  }
+
   const guessNumber = gameState.won ? gameState.currentGuess : 0;
 
   // Convert guess objects to strings for database storage
@@ -37,6 +42,11 @@ export async function submitScore(
 }
 
 export async function getUserScores(anonymousId: string): Promise<Score[]> {
+  if (!supabase) {
+    console.warn("Supabase not configured, returning empty scores");
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("scores")
     .select("*")
@@ -53,8 +63,13 @@ export async function getUserScores(anonymousId: string): Promise<Score[]> {
 
 export async function getLeaderboard(
   gameId: string,
-  limit = 10,
+  limit = 10
 ): Promise<Score[]> {
+  if (!supabase) {
+    console.warn("Supabase not configured, returning empty leaderboard");
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("scores")
     .select("*")

@@ -1,8 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { getDailyGameId, getPixelationLevel, type GameState } from "@/lib/game";
+import {
+  getDailyGameId,
+  getPixelationLevel,
+  createInitialGameState,
+  updateGameState,
+  type GameState,
+} from "@/lib/game";
 import { getAnonymousId } from "@/lib/user";
+import { getDailyMovie, getPosterUrl, getMovieDetails } from "@/lib/tmdb";
+import { submitScore } from "@/lib/scores";
 import { MovieSearch } from "./MovieSearch";
 import { MoviePoster } from "./MoviePoster";
 import { GuessHistory } from "./GuessHistory";
@@ -10,32 +18,18 @@ import { ScoreDisplay } from "./ScoreDisplay";
 import type { MovieSearchResult } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
 
-// Client-safe game state from API
-interface ClientGameState {
-  gameId: string;
-  guesses: Array<{
-    title: string;
-    year?: number;
-    collectionId?: number | null;
-    movieId?: number;
-    directorId?: number | null;
-    genreIds?: number[];
-    productionCompanyIds?: number[];
-  }>;
-  currentGuess: number;
-  isComplete: boolean;
-  won: boolean;
-  score: number;
-  posterUrl: string | null;
-}
+const GAME_STATE_KEY = "coverquest_game_state";
+const CURRENT_MOVIE_KEY = "coverquest_current_movie";
+const POSTER_URL_KEY = "coverquest_poster_url";
 
 export const GameBoard = () => {
-  const [gameState, setGameState] = useState<ClientGameState | null>(null);
+  const [gameState, setGameState] = useState<GameState | null>(null);
   const [currentMovie, setCurrentMovie] = useState<Movie | null>(null);
+  const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Load game state from server
+  // Load or initialize game
   useEffect(() => {
     const initializeGame = async () => {
       try {
@@ -44,55 +38,78 @@ export const GameBoard = () => {
 
         const today = new Date();
         const gameId = getDailyGameId(today);
-        const anonymousId = getAnonymousId();
 
-        // Fetch game state from server
-        const response = await fetch(
-          `/api/game/state?anonymousId=${encodeURIComponent(anonymousId)}&gameId=${encodeURIComponent(gameId)}`,
-        );
+        // Check if we have saved game state for today
+        const savedState = localStorage.getItem(GAME_STATE_KEY);
+        const savedMovie = localStorage.getItem(CURRENT_MOVIE_KEY);
+        const savedPosterUrl = localStorage.getItem(POSTER_URL_KEY);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(
-            errorData.error || `Failed to load game: ${response.status}`,
-          );
-        }
+        let state: GameState | null = null;
+        let movie: Movie | null = null;
+        let url: string | null = null;
 
-        const state: ClientGameState = await response.json();
-        setGameState(state);
-
-        // Preload the poster image so it's ready immediately
-        if (state.posterUrl) {
-          // Preload using Image object (browser will cache it)
-          const img = new Image();
-          img.src = state.posterUrl;
-
-          // Also add link preload for better browser optimization
-          const existingLink = document.querySelector(
-            `link[href="${state.posterUrl}"]`,
-          );
-          if (!existingLink) {
-            const link = document.createElement("link");
-            link.rel = "preload";
-            link.as = "image";
-            link.href = state.posterUrl;
-            document.head.appendChild(link);
-          }
-        }
-
-        // Only fetch movie details if game is complete
-        if (state.isComplete) {
+        if (savedState && savedMovie && savedPosterUrl) {
           try {
-            const movieResponse = await fetch(
-              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`,
-            );
-            if (movieResponse.ok) {
-              const movie: Movie = await movieResponse.json();
-              setCurrentMovie(movie);
+            const parsedState = JSON.parse(savedState) as GameState;
+            const parsedMovie = JSON.parse(savedMovie) as Movie;
+            url = savedPosterUrl;
+
+            // Verify it's for today's game
+            if (parsedState.gameId === gameId) {
+              state = parsedState;
+              movie = parsedMovie;
+              // Ensure we have full movie details with relationship data
+              try {
+                const fullDetails = await getMovieDetails(movie.id);
+                movie = { ...movie, ...fullDetails };
+                localStorage.setItem(CURRENT_MOVIE_KEY, JSON.stringify(movie));
+              } catch (error) {
+                console.error("Error fetching full movie details:", error);
+              }
             }
-          } catch (err) {
-            console.error("Error fetching movie details:", err);
+          } catch (e) {
+            console.error("Error parsing saved game state:", e);
           }
+        }
+
+        // If no valid saved state, fetch new movie
+        const isDevelopment =
+          typeof window !== "undefined" &&
+          (window.location.hostname === "localhost" ||
+            window.location.hostname === "127.0.0.1");
+
+        if (!state || !movie || !url || isDevelopment) {
+          // In development, always fetch a new movie each time
+          movie = await getDailyMovie(today, isDevelopment);
+          // Ensure we have full movie details with relationship data
+          try {
+            const fullDetails = await getMovieDetails(movie.id);
+            movie = { ...movie, ...fullDetails };
+          } catch (error) {
+            console.error("Error fetching full movie details:", error);
+          }
+          state = createInitialGameState(gameId, movie);
+          url = getPosterUrl(movie.poster_path);
+
+          // Save to localStorage
+          localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
+          localStorage.setItem(CURRENT_MOVIE_KEY, JSON.stringify(movie));
+          localStorage.setItem(POSTER_URL_KEY, url || "");
+        }
+
+        setGameState(state);
+        setCurrentMovie(movie);
+        setPosterUrl(url);
+
+        // Preload the poster image
+        if (url) {
+          const img = new Image();
+          img.src = url;
+          const link = document.createElement("link");
+          link.rel = "preload";
+          link.as = "image";
+          link.href = url;
+          document.head.appendChild(link);
         }
       } catch (err) {
         console.error("Error initializing game:", err);
@@ -111,69 +128,60 @@ export const GameBoard = () => {
 
   const handleMovieSelect = useCallback(
     async (selectedMovie: MovieSearchResult) => {
-      if (!gameState || gameState.isComplete) {
+      if (!gameState || !currentMovie || gameState.isComplete) {
         return;
       }
 
+      // Fetch full movie details to get relationship info
+      let guessCollectionId: number | null = null;
+      let guessYear: number | undefined = undefined;
+      let guessDirectorId: number | null = null;
+      let guessGenreIds: number[] = [];
+      let guessProductionCompanyIds: number[] = [];
+
       try {
-        const today = new Date();
-        const gameId = getDailyGameId(today);
-        const anonymousId = getAnonymousId();
+        const fullMovieDetails = await getMovieDetails(selectedMovie.id);
+        guessCollectionId = fullMovieDetails.belongs_to_collection?.id || null;
+        guessYear = fullMovieDetails.release_date
+          ? new Date(fullMovieDetails.release_date).getFullYear()
+          : undefined;
+        guessDirectorId = fullMovieDetails.director_id || null;
+        guessGenreIds = fullMovieDetails.genres?.map((g) => g.id) || [];
+        guessProductionCompanyIds =
+          fullMovieDetails.production_companies?.map((c) => c.id) || [];
+      } catch (error) {
+        console.error("Error fetching movie details:", error);
+      }
 
-        // Submit guess to server
-        const response = await fetch("/api/game/guess", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            anonymousId,
-            gameId,
-            guess: {
-              title: selectedMovie.title,
-              movieId: selectedMovie.id,
-            },
-          }),
-        });
+      // Use movie ID comparison for accurate matching
+      const isCorrect = selectedMovie.id === currentMovie.id;
+      const guess = {
+        title: selectedMovie.title,
+        year: guessYear,
+        collectionId: guessCollectionId,
+        movieId: selectedMovie.id,
+        directorId: guessDirectorId,
+        genreIds: guessGenreIds,
+        productionCompanyIds: guessProductionCompanyIds,
+      };
+      const newState = updateGameState(gameState, guess, isCorrect);
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to submit guess");
+      setGameState(newState);
+
+      // Save updated state
+      localStorage.setItem(GAME_STATE_KEY, JSON.stringify(newState));
+
+      // Submit score if game is complete
+      if (newState.isComplete) {
+        try {
+          const anonymousId = getAnonymousId();
+          await submitScore(newState, anonymousId);
+        } catch (err) {
+          console.error("Error submitting score:", err);
         }
-
-        const updatedState: ClientGameState = await response.json();
-        setGameState(updatedState);
-
-        // Ensure poster is preloaded after state update
-        if (updatedState.posterUrl) {
-          const img = new Image();
-          img.src = updatedState.posterUrl;
-        }
-
-        // Fetch movie details if game is now complete
-        if (updatedState.isComplete) {
-          try {
-            const movieResponse = await fetch(
-              `/api/game/movie?gameId=${encodeURIComponent(gameId)}&isComplete=true`,
-            );
-            if (movieResponse.ok) {
-              const movie: Movie = await movieResponse.json();
-              setCurrentMovie(movie);
-            }
-          } catch (err) {
-            console.error("Error fetching movie details:", err);
-          }
-        }
-      } catch (err) {
-        console.error("Error submitting guess:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to submit guess. Please try again.",
-        );
       }
     },
-    [gameState],
+    [gameState, currentMovie],
   );
 
   if (isLoading) {
@@ -194,6 +202,7 @@ export const GameBoard = () => {
           <div className="text-lg text-red-600 mb-2">Error</div>
           <div className="text-sm text-gray-600">{error}</div>
           <button
+            type="button"
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
@@ -204,7 +213,7 @@ export const GameBoard = () => {
     );
   }
 
-  if (!gameState) {
+  if (!gameState || !currentMovie) {
     return null;
   }
 
@@ -213,25 +222,10 @@ export const GameBoard = () => {
     ? 0
     : getPixelationLevel(gameState.currentGuess);
 
-  // Convert client state to GameState for components that need it
-  const gameStateForComponents: GameState = {
-    gameId: gameState.gameId,
-    movieId: 0, // Not exposed to client
-    movieTitle: "", // Not exposed to client
-    guesses: gameState.guesses,
-    currentGuess: gameState.currentGuess,
-    isComplete: gameState.isComplete,
-    won: gameState.won,
-    score: gameState.score,
-  };
-
   return (
     <div className="w-full max-w-2xl mx-auto">
       <div className="mb-6">
-        <MoviePoster
-          imageUrl={gameState.posterUrl}
-          pixelationLevel={pixelationLevel}
-        />
+        <MoviePoster imageUrl={posterUrl} pixelationLevel={pixelationLevel} />
       </div>
 
       {!gameState.isComplete && (
@@ -246,21 +240,18 @@ export const GameBoard = () => {
         </div>
       )}
 
-      {gameState.guesses.length > 0 && currentMovie && (
+      {gameState.guesses.length > 0 && (
         <GuessHistory
-          gameState={gameStateForComponents}
-          correctMovie={currentMovie}
+          gameState={gameState}
+          correctMovie={gameState.isComplete ? currentMovie : undefined}
         />
       )}
 
-      {currentMovie && (
-        <ScoreDisplay
-          gameState={gameStateForComponents}
-          correctMovie={currentMovie}
-        />
+      {gameState.isComplete && (
+        <ScoreDisplay gameState={gameState} correctMovie={currentMovie} />
       )}
 
-      {gameState.isComplete && !gameState.won && currentMovie && (
+      {gameState.isComplete && !gameState.won && (
         <div className="mt-6 p-4 bg-gray-100 rounded-lg">
           <p className="font-semibold mb-2">The correct answer was:</p>
           <p className="text-xl">{currentMovie.title}</p>

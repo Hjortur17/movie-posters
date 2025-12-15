@@ -27,14 +27,6 @@ Create a `.env.local` file in the root directory:
 TMDB_API_KEY=your_tmdb_api_key
 SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
-KV_REST_API_URL=your_redis_rest_api_url
-KV_REST_API_TOKEN=your_redis_rest_api_token
-```
-
-Or if using Upstash directly:
-```env
-UPSTASH_REDIS_REST_URL=your_upstash_redis_rest_url
-UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 ```
 
 #### Getting API Keys
@@ -51,11 +43,6 @@ UPSTASH_REDIS_REST_TOKEN=your_upstash_redis_rest_token
 3. Go to Settings → API
 4. Copy your Project URL and anon/public key to `.env.local`
 
-**Upstash Redis (or Vercel KV):**
-1. Go to [https://upstash.com](https://upstash.com) or use Vercel KV
-2. Create a new Redis database
-3. Copy the REST API URL and REST API Token to `.env.local`
-4. The code supports both `KV_REST_API_URL`/`KV_REST_API_TOKEN` (Vercel KV) and `UPSTASH_REDIS_REST_URL`/`UPSTASH_REDIS_REST_TOKEN` (Upstash)
 
 ### 3. Set Up Supabase Database
 
@@ -113,7 +100,6 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - **Tailwind CSS** - Styling
 - **The Movie DB API** - Movie data and posters
 - **Supabase** - Database and score tracking
-- **Upstash Redis** - Server-side game state storage (prevents client-side cheating)
 - **Canvas API** - Pixelation effects
 
 ## Project Structure
@@ -123,9 +109,8 @@ src/
 ├── app/
 │   ├── page.tsx          # Main page
 │   ├── layout.tsx        # Root layout
-│   ├── globals.css       # Global styles
+│   └── globals.css       # Global styles
 │   └── api/
-│       ├── game/         # Game state API routes (server-side)
 │       └── tmdb/         # TMDB API proxy routes
 ├── components/
 │   ├── GameBoard.tsx     # Main game component
@@ -140,8 +125,7 @@ src/
     ├── supabase.ts       # Supabase client
     ├── scores.ts         # Score submission/retrieval
     ├── user.ts           # Anonymous user tracking
-    ├── pixelate.ts       # Pixelation utilities
-    └── redis.ts          # Vercel KV client
+    └── pixelate.ts       # Pixelation utilities
 ```
 ```
 

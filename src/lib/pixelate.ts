@@ -1,6 +1,6 @@
 export function pixelateImage(
   imageUrl: string,
-  pixelationLevel: number,
+  pixelationLevel: number
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -17,7 +17,8 @@ export function pixelateImage(
       // Calculate pixel size based on pixelation level (0-100)
       // Higher level = more pixelated
       // Lower multiplier = smaller pixels = more detail visible
-      const pixelSize = Math.max(1, Math.floor((pixelationLevel / 100) * 30));
+      // Ensure minimum pixel size of 2 to maintain pixelation effect
+      const pixelSize = Math.max(2, Math.floor((pixelationLevel / 100) * 40));
 
       canvas.width = img.width;
       canvas.height = img.height;
@@ -59,5 +60,3 @@ export function pixelateImage(
     img.src = imageUrl;
   });
 }
-
-

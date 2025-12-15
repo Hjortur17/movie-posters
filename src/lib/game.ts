@@ -30,9 +30,10 @@ export function getDailyGameId(date: Date): string {
 }
 
 export function getPixelationLevel(guessNumber: number): number {
-  // Progressive pixelation: 50% → 35% → 25% → 18% → 12%
+  // Progressive pixelation: 80% → 60% → 40% → 25% → 15%
   // Lower levels = more pixels/details visible for guessing
-  const levels = [50, 35, 25, 18, 12];
+  // Increased levels to ensure image stays pixelated
+  const levels = [80, 60, 40, 25, 15];
   if (guessNumber < 0) guessNumber = 0;
   if (guessNumber >= levels.length) guessNumber = levels.length - 1;
   return levels[guessNumber];

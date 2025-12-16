@@ -31,7 +31,6 @@ export const MoviePoster = ({
       return;
     }
 
-    // Always pixelate the image - never show original as fallback
     setIsLoading(true);
     pixelateImage(imageUrl, pixelationLevel)
       .then((dataUrl) => {
@@ -40,19 +39,8 @@ export const MoviePoster = ({
       })
       .catch((error) => {
         console.error("Error pixelating image:", error);
-        // Retry pixelation with a higher level to ensure it works
-        // Use maximum pixelation as fallback to prevent showing original
-        pixelateImage(imageUrl, 80)
-          .then((dataUrl) => {
-            setPixelatedUrl(dataUrl);
-            setIsLoading(false);
-          })
-          .catch((retryError) => {
-            console.error("Retry pixelation also failed:", retryError);
-            // Last resort: create a heavily pixelated version
-            // This should never fail, but if it does, show loading state
-            setIsLoading(true);
-          });
+        setPixelatedUrl(imageUrl);
+        setIsLoading(false);
       });
   }, [imageUrl, pixelationLevel]);
 
@@ -65,16 +53,6 @@ export const MoviePoster = ({
   }
 
   if (isLoading) {
-    return (
-      <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
-  // CRITICAL: Never show original image if pixelation is required
-  // Only show pixelated version or loading state
-  if (!pixelatedUrl && pixelationLevel > 0) {
     return (
       <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">Loading...</span>

@@ -38,7 +38,7 @@ export const MovieSearch = ({
       setIsLoading(true);
       try {
         const results = await searchMovies(query);
-        setSuggestions(results.slice(0, 5)); // Limit to 5 suggestions
+        setSuggestions(results.slice(0, 6)); // Show up to 6 suggestions
         setShowSuggestions(true);
         setSelectedIndex(-1);
       } catch (error) {

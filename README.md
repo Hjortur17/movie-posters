@@ -29,6 +29,8 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+**Note:** This project uses localStorage for game state persistence. Redis/KV storage is NOT used and should NOT be added.
+
 #### Getting API Keys
 
 **The Movie DB API:**

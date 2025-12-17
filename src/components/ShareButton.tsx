@@ -61,27 +61,55 @@ export const ShareButton = ({ gameState, correctMovie }: ShareButtonProps) => {
   const handleShare = async () => {
     const shareText = generateShareText();
 
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          text: shareText,
-        });
-      } else {
-        // Fallback to clipboard
-        await navigator.clipboard.writeText(shareText);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      }
-    } catch {
-      // If sharing fails, try clipboard
+    // Try clipboard first (most reliable)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
       try {
         await navigator.clipboard.writeText(shareText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
+        return;
       } catch (clipboardError) {
-        console.error("Failed to copy to clipboard:", clipboardError);
+        console.error("Clipboard API failed, trying fallback:", clipboardError);
       }
     }
+
+    // Fallback: Use document.execCommand for older browsers
+    try {
+      const textArea = document.createElement("textarea");
+      textArea.value = shareText;
+      textArea.style.position = "fixed";
+      textArea.style.left = "-999999px";
+      textArea.style.top = "-999999px";
+      document.body.appendChild(textArea);
+      textArea.focus();
+      textArea.select();
+
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textArea);
+
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+    } catch (execError) {
+      console.error("execCommand fallback failed:", execError);
+    }
+
+    // Last resort: Try Web Share API if available
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          text: shareText,
+        });
+        return;
+      } catch (shareError) {
+        console.error("Web Share API failed:", shareError);
+      }
+    }
+
+    // If all methods fail, show an alert with the text
+    alert(`Share this text:\n\n${shareText}\n\n(Please copy manually)`);
   };
 
   if (!gameState.isComplete) {

@@ -20,7 +20,7 @@ import type { Movie } from "@/lib/tmdb";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
-const POSTER_URL_KEY = "posterquest_poster_url";
+// POSTER_URL_KEY removed - we reconstruct it from movie data to prevent exposing original URL
 
 export const GameBoard = () => {
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -42,17 +42,14 @@ export const GameBoard = () => {
         // Check if we have saved game state for today
         const savedState = localStorage.getItem(GAME_STATE_KEY);
         const savedMovie = localStorage.getItem(CURRENT_MOVIE_KEY);
-        const savedPosterUrl = localStorage.getItem(POSTER_URL_KEY);
 
         let state: GameState | null = null;
         let movie: Movie | null = null;
-        let url: string | null = null;
 
-        if (savedState && savedMovie && savedPosterUrl) {
+        if (savedState && savedMovie) {
           try {
             const parsedState = JSON.parse(savedState) as GameState;
             const parsedMovie = JSON.parse(savedMovie) as Movie;
-            url = savedPosterUrl;
 
             // Verify it's for today's game
             if (parsedState.gameId === gameId) {
@@ -78,7 +75,7 @@ export const GameBoard = () => {
           (window.location.hostname === "localhost" ||
             window.location.hostname === "127.0.0.1");
 
-        if (!state || !movie || !url || isDevelopment) {
+        if (!state || !movie || isDevelopment) {
           // In development, always fetch a new movie each time
           movie = await getDailyMovie(today, isDevelopment);
           // Ensure we have full movie details with relationship data
@@ -89,28 +86,25 @@ export const GameBoard = () => {
             console.error("Error fetching full movie details:", error);
           }
           state = createInitialGameState(gameId, movie);
-          url = getPosterUrl(movie.poster_path);
 
-          // Save to localStorage
+          // Save to localStorage (but NOT the poster URL)
           localStorage.setItem(GAME_STATE_KEY, JSON.stringify(state));
           localStorage.setItem(CURRENT_MOVIE_KEY, JSON.stringify(movie));
-          localStorage.setItem(POSTER_URL_KEY, url || "");
+        }
+
+        // Always reconstruct poster URL from movie data (never store it)
+        const url = getPosterUrl(movie.poster_path);
+
+        // Clean up old poster URL from localStorage if it exists (security: remove original URL)
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("posterquest_poster_url");
         }
 
         setGameState(state);
         setCurrentMovie(movie);
         setPosterUrl(url);
 
-        // Preload the poster image
-        if (url) {
-          const img = new Image();
-          img.src = url;
-          const link = document.createElement("link");
-          link.rel = "preload";
-          link.as = "image";
-          link.href = url;
-          document.head.appendChild(link);
-        }
+        // DO NOT preload the original image - only pixelated versions should be loaded
       } catch (err) {
         console.error("Error initializing game:", err);
         setError(

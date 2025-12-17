@@ -25,9 +25,11 @@ Create a `.env.local` file in the root directory:
 
 ```env
 TMDB_API_KEY=your_tmdb_api_key
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_anon_key
 ```
+
+**Note:** You can also use `SUPABASE_URL` and `SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_ANON_KEY`) for backward compatibility.
 
 **Note:** This project uses localStorage for game state persistence. Redis/KV storage is NOT used and should NOT be added.
 
@@ -48,18 +50,24 @@ SUPABASE_ANON_KEY=your_supabase_anon_key
 
 ### 3. Set Up Supabase Database
 
-Run the SQL script in `supabase-schema.sql` in your Supabase SQL Editor:
+**Yes, you need to run the SQL script to create the database tables!**
 
-1. Open your Supabase project
-2. Go to SQL Editor
-3. Copy and paste the contents of `supabase-schema.sql`
-4. Run the script
+Follow these steps:
+
+1. **Open your Supabase project** at [https://supabase.com](https://supabase.com)
+2. **Go to SQL Editor** (in the left sidebar)
+3. **Click "New Query"** (or use the existing query editor)
+4. **Copy the entire contents** of the `supabase-schema.sql` file in this project
+5. **Paste it into the SQL Editor**
+6. **Click "Run"** (or press `Ctrl/Cmd + Enter`)
 
 This will create:
-- `scores` table for storing game scores
-- Indexes for performance
-- Row Level Security policies
-- A leaderboard function
+- ✅ `scores` table for storing game scores
+- ✅ Indexes for better query performance
+- ✅ Row Level Security (RLS) policies for data access
+- ✅ A leaderboard function for querying top scores
+
+**Important:** You only need to run this script **once** when setting up your project. After that, the tables will persist in your Supabase database.
 
 ### 4. Run the Development Server
 

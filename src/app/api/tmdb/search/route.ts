@@ -22,7 +22,9 @@ export async function GET(request: NextRequest) {
   try {
     // Fetch multiple pages for broader results
     interface TMDBMovie {
+      id: number;
       poster_path: string | null;
+      popularity?: number;
       [key: string]: unknown;
     }
     const allResults: TMDBMovie[] = [];
@@ -53,10 +55,11 @@ export async function GET(request: NextRequest) {
       }
 
       const data = await response.json();
-      // Filter to only return movies with posters
+      // Filter to only return movies with posters and valid IDs
       const pageResults = data.results.filter(
-        (movie: { poster_path: string | null }) => movie.poster_path
-      );
+        (movie: { id: number; poster_path: string | null }) =>
+          movie.poster_path && movie.id
+      ) as TMDBMovie[];
       allResults.push(...pageResults);
 
       // Stop if we've reached the last page
@@ -68,16 +71,15 @@ export async function GET(request: NextRequest) {
     // Remove duplicates by movie ID
     const uniqueMovies = new Map<number, TMDBMovie>();
     for (const movie of allResults) {
-      const movieId = (movie as { id: number }).id;
-      if (!uniqueMovies.has(movieId)) {
-        uniqueMovies.set(movieId, movie);
+      if (!uniqueMovies.has(movie.id)) {
+        uniqueMovies.set(movie.id, movie);
       }
     }
 
     // Convert back to array and sort by popularity (highest first)
     const sortedResults = Array.from(uniqueMovies.values()).sort((a, b) => {
-      const popularityA = (a as { popularity?: number }).popularity ?? 0;
-      const popularityB = (b as { popularity?: number }).popularity ?? 0;
+      const popularityA = a.popularity ?? 0;
+      const popularityB = b.popularity ?? 0;
       return popularityB - popularityA;
     });
 

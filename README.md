@@ -27,7 +27,6 @@ Create a `.env.local` file in the root directory:
 TMDB_API_KEY=your_tmdb_api_key
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 CRON_SECRET=your_cron_secret_optional
 ```
 
@@ -36,8 +35,7 @@ CRON_SECRET=your_cron_secret_optional
 **Note:** This project uses localStorage for game state persistence. Redis/KV storage is NOT used and should NOT be added.
 
 **Cron Job Setup:**
-- `SUPABASE_SERVICE_ROLE_KEY`: Required for the cron job to write daily movies to the database. Get this from Supabase Settings → API → service_role key (keep this secret!)
-- `CRON_SECRET`: Optional but recommended. A secret string to secure your cron endpoint. If set, Vercel will send this in the Authorization header.
+- `CRON_SECRET`: Optional but recommended. A secret string to secure your cron endpoint. If set, Vercel will send this in the Authorization header. The cron job uses your existing Supabase publishable key to write to the database.
 
 #### Getting API Keys
 

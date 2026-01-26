@@ -81,12 +81,17 @@ CREATE POLICY "Allow public daily movie reading"
   TO anon, authenticated
   USING (true);
 
--- Create a policy that allows service role to insert/update daily movies (for cron job)
--- Note: This requires using the service role key in the cron job, not the anon key
-CREATE POLICY "Allow service role daily movie write"
+-- Create a policy that allows anyone to insert/update daily movies (for cron job)
+CREATE POLICY "Allow public daily movie write"
   ON daily_movies
-  FOR ALL
-  TO service_role
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Allow public daily movie update"
+  ON daily_movies
+  FOR UPDATE
+  TO anon, authenticated
   USING (true)
   WITH CHECK (true);
 

@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import type { Movie } from "./tmdb";
 import { getDailyGameId } from "./game";
 
-// Get Supabase client with anon key (for reads)
+// Get Supabase client with anon/publishable key
 function getSupabaseClient() {
   const supabaseUrl =
     process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,19 +16,6 @@ function getSupabaseClient() {
   }
 
   return createClient(supabaseUrl, supabaseKey);
-}
-
-// Get Supabase client with service role key (for writes in cron job)
-function getSupabaseServiceClient() {
-  const supabaseUrl =
-    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    return null;
-  }
-
-  return createClient(supabaseUrl, supabaseServiceKey);
 }
 
 /**
@@ -80,11 +67,9 @@ export async function storeDailyMovieInDB(
   gameId: string,
   movie: Movie
 ): Promise<boolean> {
-  const supabase = getSupabaseServiceClient();
+  const supabase = getSupabaseClient();
   if (!supabase) {
-    console.warn(
-      "Supabase service role key not configured, cannot store in database"
-    );
+    console.warn("Supabase not configured, cannot store in database");
     return false;
   }
 

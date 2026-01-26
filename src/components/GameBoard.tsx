@@ -17,6 +17,7 @@ import { GuessHistory } from "./GuessHistory";
 import { ScoreDisplay } from "./ScoreDisplay";
 import type { MovieSearchResult } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
+import { UserStats } from "./UserStats";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
@@ -28,6 +29,7 @@ export const GameBoard = () => {
   const [posterUrl, setPosterUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   // Load or initialize game
   useEffect(() => {
@@ -222,15 +224,23 @@ export const GameBoard = () => {
 
       <div className="flex-1">
         {gameState.guesses.length > 0 && (
-          <GuessHistory
-            gameState={gameState}
-            correctMovie={currentMovie}
-          />
+          <GuessHistory gameState={gameState} correctMovie={currentMovie} />
         )}
 
-        <p className="text-sm text-gray-600 mb-2 mt-6">
-          Guess {gameState.currentGuess + 1} of 5
-        </p>
+        <div className="mb-2 mt-6 flex justify-between items-center">
+          <p className="text-sm text-gray-600">
+            Guess {gameState.currentGuess + 1} of 5
+          </p>
+
+          <button
+            type="button"
+            onClick={() => setStatsOpen(true)}
+            className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
+            title="View your statistics"
+          >
+            📊 Stats
+          </button>
+        </div>
         <MovieSearch
           onSelect={handleMovieSelect}
           disabled={gameState.isComplete}
@@ -252,6 +262,8 @@ export const GameBoard = () => {
           )}
         </div>
       )}
+
+      <UserStats isOpen={statsOpen} onOpenChange={setStatsOpen} />
     </div>
   );
 };

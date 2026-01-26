@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import type { GameState } from "@/lib/game";
 import type { Movie } from "@/lib/tmdb";
 import { ShareButton } from "./ShareButton";
+import { UserStats } from "./UserStats";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ export const ScoreDisplay = ({
   correctMovie,
 }: ScoreDisplayProps) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [statsOpen, setStatsOpen] = useState(false);
 
   useEffect(() => {
     if (gameState.isComplete && gameState.won) {
@@ -58,8 +60,15 @@ export const ScoreDisplay = ({
               </p>
               <p className="text-lg mb-4">Score: {gameState.score} points</p>
             </div>
-            <div className="flex justify-center">
+            <div className="flex justify-center gap-3">
               <ShareButton gameState={gameState} correctMovie={correctMovie} />
+              <button
+                type="button"
+                onClick={() => setStatsOpen(true)}
+                className="px-6 py-3 bg-gray-600 text-white rounded-md font-semibold hover:bg-gray-700 transition-colors"
+              >
+                📊 View Stats
+              </button>
             </div>
           </DialogContent>
         </Dialog>
@@ -67,9 +76,20 @@ export const ScoreDisplay = ({
         <div className="mt-6 p-6 bg-gray-50 rounded-lg border">
           <h3 className="text-xl font-bold mb-4">❌ Game Over</h3>
           <p className="text-lg mb-4">Score: {gameState.score} points</p>
-          <ShareButton gameState={gameState} correctMovie={correctMovie} />
+          <div className="flex justify-center gap-3">
+            <ShareButton gameState={gameState} correctMovie={correctMovie} />
+            <button
+              type="button"
+              onClick={() => setStatsOpen(true)}
+              className="px-6 py-3 bg-gray-600 text-white rounded-md font-semibold hover:bg-gray-700 transition-colors"
+            >
+              📊 View Stats
+            </button>
+          </div>
         </div>
       )}
+
+      <UserStats isOpen={statsOpen} onOpenChange={setStatsOpen} />
     </>
   );
 };

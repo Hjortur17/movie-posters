@@ -217,29 +217,25 @@ export const GameBoard = () => {
     : getPixelationLevel(gameState.currentGuess);
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="mb-6">
-        <MoviePoster imageUrl={posterUrl} pixelationLevel={pixelationLevel} />
-      </div>
+    <div className="w-full flex items-end max-w-4xl mx-auto justify-between gap-10">
+      <MoviePoster imageUrl={posterUrl} pixelationLevel={pixelationLevel} />
 
-      {!gameState.isComplete && (
-        <div className="mb-6">
-          <p className="text-sm text-gray-600 mb-2">
-            Guess {gameState.currentGuess + 1} of 5
-          </p>
-          <MovieSearch
-            onSelect={handleMovieSelect}
-            disabled={gameState.isComplete}
+      <div className="flex-1">
+        {gameState.guesses.length > 0 && (
+          <GuessHistory
+            gameState={gameState}
+            correctMovie={currentMovie}
           />
-        </div>
-      )}
+        )}
 
-      {gameState.guesses.length > 0 && (
-        <GuessHistory
-          gameState={gameState}
-          correctMovie={gameState.isComplete ? currentMovie : undefined}
+        <p className="text-sm text-gray-600 mb-2 mt-6">
+          Guess {gameState.currentGuess + 1} of 5
+        </p>
+        <MovieSearch
+          onSelect={handleMovieSelect}
+          disabled={gameState.isComplete}
         />
-      )}
+      </div>
 
       {gameState.isComplete && (
         <ScoreDisplay gameState={gameState} correctMovie={currentMovie} />

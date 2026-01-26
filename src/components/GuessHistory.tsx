@@ -21,7 +21,7 @@ export const GuessHistory = ({
     <div className="mt-6 space-y-2">
       <h3 className="text-lg font-semibold mb-3">Your Guesses</h3>
       {gameState.guesses.map((guess, index) => {
-        // Only show correct/related status if we have the correct movie (game is complete)
+        // Check if guess is correct or related - we can do this during gameplay too
         let isCorrect = false;
         let isRelated = false;
 
@@ -33,6 +33,7 @@ export const GuessHistory = ({
               correctMovie.title.toLowerCase().trim();
 
           // Check if movies are related (same franchise, director, genres, or production company)
+          // Show related status immediately during gameplay
           isRelated = !isCorrect && areMoviesRelated(guess, correctMovie);
         }
 
@@ -42,7 +43,8 @@ export const GuessHistory = ({
           : "bg-gray-50 border-gray-200 text-gray-900";
         let statusText = null;
 
-        if (isCorrect) {
+        // Only show "Correct!" when game is complete, but show "Related" immediately
+        if (isCorrect && gameState.isComplete) {
           bgClass = "bg-green-50 border-green-200 text-green-900";
           statusText = (
             <span className="ml-auto text-green-600 font-bold">✓ Correct!</span>

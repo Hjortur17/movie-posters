@@ -59,7 +59,7 @@ export const MoviePoster = ({
 
   if (!imageUrl) {
     return (
-      <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
+      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">No poster available</span>
       </div>
     );
@@ -67,7 +67,7 @@ export const MoviePoster = ({
 
   if (isLoading) {
     return (
-      <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
+      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">Loading...</span>
       </div>
     );
@@ -77,7 +77,7 @@ export const MoviePoster = ({
   // Only show pixelated version or loading state
   if (pixelationLevel > 0 && !pixelatedUrl) {
     return (
-      <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
+      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">Loading...</span>
       </div>
     );
@@ -88,14 +88,15 @@ export const MoviePoster = ({
 
   if (!imageSrc) {
     return (
-      <div className="w-full aspect-[8/9] bg-gray-200 flex items-center justify-center rounded-lg">
+      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
         <span className="text-gray-400">Loading...</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full aspect-[8/9] max-h-[700px] rounded-lg overflow-hidden bg-transparent relative">
+    <div className="w-full aspect-2/3 max-w-[400px] rounded-lg overflow-hidden bg-transparent relative">
+      {/** biome-ignore lint/performance/noImgElement: <> */}
       <img
         src={imageSrc}
         alt={alt}

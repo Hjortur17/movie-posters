@@ -30,11 +30,18 @@ export async function GET(request: NextRequest) {
     const allResults: TMDBMovie[] = [];
     const maxPages = 3; // Fetch up to 3 pages for broader results
 
+    // Get today's date in YYYY-MM-DD format for filtering
+    const today = new Date();
+    const todayString = today.toISOString().split("T")[0];
+
     for (let page = 1; page <= maxPages; page++) {
-      const url = `${TMDB_API_BASE}/search/movie?query=${encodeURIComponent(
-        query
-      )}&page=${page}`;
-      const response = await fetch(url, {
+      const url = new URL(`${TMDB_API_BASE}/search/movie`);
+      url.searchParams.set("query", query);
+      url.searchParams.set("page", page.toString());
+      // Filter to only include movies released on or before today
+      url.searchParams.set("primary_release_date.lte", todayString);
+      
+      const response = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${apiKey}`,
           "Content-Type": "application/json",
@@ -55,10 +62,24 @@ export async function GET(request: NextRequest) {
       }
 
       const data = await response.json();
-      // Filter to only return movies with posters and valid IDs
+      // Filter to only return movies with posters, valid IDs, and that have been released
+      // (Client-side filter as backup, since search endpoint may not support date filtering)
+      const todayForComparison = new Date();
+      todayForComparison.setHours(0, 0, 0, 0); // Set to start of day for comparison
+      
       const pageResults = data.results.filter(
-        (movie: { id: number; poster_path: string | null }) =>
-          movie.poster_path && movie.id
+        (movie: { id: number; poster_path: string | null; release_date?: string }) => {
+          if (!movie.poster_path || !movie.id) {
+            return false;
+          }
+          // Only include movies that have been released (release_date exists and is today or in the past)
+          if (!movie.release_date) {
+            return false;
+          }
+          const releaseDate = new Date(movie.release_date);
+          releaseDate.setHours(0, 0, 0, 0);
+          return releaseDate <= todayForComparison;
+        }
       ) as TMDBMovie[];
       allResults.push(...pageResults);
 

@@ -60,4 +60,34 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+-- Create the daily_movies table for storing pre-fetched daily movies
+CREATE TABLE IF NOT EXISTS daily_movies (
+  game_id TEXT PRIMARY KEY,
+  movie_data JSONB NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index on game_id for fast lookups
+CREATE INDEX IF NOT EXISTS idx_daily_movies_game_id ON daily_movies(game_id);
+
+-- Enable Row Level Security (RLS)
+ALTER TABLE daily_movies ENABLE ROW LEVEL SECURITY;
+
+-- Create a policy that allows anyone to read daily movies (for the game)
+CREATE POLICY "Allow public daily movie reading"
+  ON daily_movies
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+-- Create a policy that allows service role to insert/update daily movies (for cron job)
+-- Note: This requires using the service role key in the cron job, not the anon key
+CREATE POLICY "Allow service role daily movie write"
+  ON daily_movies
+  FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);
+
 

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { getDailyMovieFromDB } from "@/lib/daily-movies";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
@@ -13,6 +15,20 @@ export async function GET(request: NextRequest) {
   const dateString =
     searchParams.get("date") || new Date().toISOString().split("T")[0];
   const forceNew = searchParams.get("forceNew") === "true"; // For development
+
+  // Try to fetch from database first (unless forceNew is true)
+  if (!forceNew) {
+    try {
+      const date = new Date(dateString + "T00:00:00Z");
+      const cachedMovie = await getDailyMovieFromDB(date);
+      if (cachedMovie) {
+        return NextResponse.json(cachedMovie);
+      }
+    } catch (error) {
+      // If database lookup fails, fall back to computation
+      console.warn("Error fetching from database, falling back to computation:", error);
+    }
+  }
 
   const apiKey = process.env.TMDB_API_KEY;
   if (!apiKey) {
@@ -34,7 +50,11 @@ export async function GET(request: NextRequest) {
       seed = seed + (timestamp % 1000000);
     }
 
-    const allMovies: any[] = [];
+    const allMovies: Array<{
+      id: number;
+      poster_path: string | null;
+      [key: string]: unknown;
+    }> = [];
 
     // Fetch blockbuster movies using discover endpoint with filters
     // Filters: vote_count >= 1000 (popular/blockbuster), sort by popularity

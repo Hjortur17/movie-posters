@@ -64,12 +64,19 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TABLE IF NOT EXISTS daily_movies (
   game_id TEXT PRIMARY KEY,
   movie_data JSONB NOT NULL,
+  movie_id INTEGER,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create index on game_id for fast lookups
 CREATE INDEX IF NOT EXISTS idx_daily_movies_game_id ON daily_movies(game_id);
+-- Index on movie_id for "recently used" lookups (200-day exclusion)
+CREATE INDEX IF NOT EXISTS idx_daily_movies_movie_id ON daily_movies(movie_id);
+
+-- If daily_movies already exists without movie_id, run this once:
+-- ALTER TABLE daily_movies ADD COLUMN IF NOT EXISTS movie_id INTEGER;
+-- CREATE INDEX IF NOT EXISTS idx_daily_movies_movie_id ON daily_movies(movie_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE daily_movies ENABLE ROW LEVEL SECURITY;
@@ -94,36 +101,3 @@ CREATE POLICY "Allow public daily movie update"
   TO anon, authenticated
   USING (true)
   WITH CHECK (true);
-
--- Daily movie history: one row per date with TMDB movie_id (for 200-day exclusion)
-CREATE TABLE IF NOT EXISTS daily_movie_history (
-  game_id TEXT PRIMARY KEY,
-  movie_id INTEGER NOT NULL,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_daily_movie_history_movie_id ON daily_movie_history(movie_id);
-CREATE INDEX IF NOT EXISTS idx_daily_movie_history_game_id ON daily_movie_history(game_id);
-
-ALTER TABLE daily_movie_history ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Allow public daily movie history reading"
-  ON daily_movie_history
-  FOR SELECT
-  TO anon, authenticated
-  USING (true);
-
-CREATE POLICY "Allow public daily movie history write"
-  ON daily_movie_history
-  FOR INSERT
-  TO anon, authenticated
-  WITH CHECK (true);
-
-CREATE POLICY "Allow public daily movie history update"
-  ON daily_movie_history
-  FOR UPDATE
-  TO anon, authenticated
-  USING (true)
-  WITH CHECK (true);
-
-

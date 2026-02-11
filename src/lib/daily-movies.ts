@@ -23,9 +23,7 @@ function getSupabaseClient() {
  * @param date - The date to fetch the movie for
  * @returns The movie data if found, null otherwise
  */
-export async function getDailyMovieFromDB(
-  date: Date
-): Promise<Movie | null> {
+export async function getDailyMovieFromDB(date: Date): Promise<Movie | null> {
   const supabase = getSupabaseClient();
   if (!supabase) {
     console.warn("Supabase not configured, cannot fetch from database");
@@ -57,45 +55,52 @@ export async function getDailyMovieFromDB(
   }
 }
 
+export type StoreDailyMovieResult =
+  | { success: true }
+  | { success: false; error: string };
+
 /**
  * Store daily movie in database
  * @param gameId - The game ID (date string in YYYY-MM-DD format)
  * @param movie - The movie data to store
- * @returns true if successful, false otherwise
+ * @returns Result with success flag and error message when failed
  */
 export async function storeDailyMovieInDB(
   gameId: string,
   movie: Movie
-): Promise<boolean> {
+): Promise<StoreDailyMovieResult> {
   const supabase = getSupabaseClient();
   if (!supabase) {
-    console.warn("Supabase not configured, cannot store in database");
-    return false;
+    const msg =
+      "Supabase not configured (missing SUPABASE_URL or Supabase anon key)";
+    console.warn(msg);
+    return { success: false, error: msg };
   }
 
   try {
-    const { error } = await supabase
-      .from("daily_movies")
-      .upsert(
-        {
-          game_id: gameId,
-          movie_data: movie,
-          updated_at: new Date().toISOString(),
-        },
-        {
-          onConflict: "game_id",
-        }
-      );
+    const { error } = await supabase.from("daily_movies").upsert(
+      {
+        game_id: gameId,
+        movie_data: movie,
+        movie_id: movie.id,
+        updated_at: new Date().toISOString(),
+      },
+      {
+        onConflict: "game_id",
+      }
+    );
 
     if (error) {
+      const msg = `${error.message} (code: ${error.code ?? "unknown"})`;
       console.error("Error storing daily movie in database:", error);
-      return false;
+      return { success: false, error: msg };
     }
 
-    return true;
-  } catch (error) {
-    console.error("Error storing daily movie in database:", error);
-    return false;
+    return { success: true };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    console.error("Error storing daily movie in database:", err);
+    return { success: false, error: msg };
   }
 }
 
@@ -121,7 +126,7 @@ export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
 
   try {
     const { data, error } = await supabase
-      .from("daily_movie_history")
+      .from("daily_movies")
       .select("movie_id")
       .gte("game_id", cutoffDate);
 
@@ -130,7 +135,11 @@ export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
       return new Set();
     }
 
-    return new Set((data ?? []).map((row) => row.movie_id));
+    return new Set(
+      (data ?? [])
+        .filter((row): row is { movie_id: number } => row.movie_id != null)
+        .map((row) => row.movie_id)
+    );
   } catch (error) {
     console.error("Error fetching recently used movie IDs:", error);
     return new Set();
@@ -138,8 +147,8 @@ export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
 }
 
 /**
- * Record that a movie was used as the daily movie for the given date.
- * Call only from the cron after successfully storing in daily_movies.
+ * Ensure movie_id is recorded for this date in daily_movies (used by cron after store).
+ * Updates the existing row so "recently used" lookups can use movie_id.
  */
 export async function addToDailyMovieHistory(
   gameId: string,
@@ -152,23 +161,23 @@ export async function addToDailyMovieHistory(
   }
 
   try {
-    const { error } = await supabase.from("daily_movie_history").insert({
-      game_id: gameId,
-      movie_id: movieId,
-    });
+    const { error } = await supabase
+      .from("daily_movies")
+      .update({ movie_id: movieId, updated_at: new Date().toISOString() })
+      .eq("game_id", gameId);
 
     if (error) {
-      // Duplicate key (cron ran twice for same day) - treat as success
-      if (error.code === "23505") {
-        return true;
-      }
-      console.error("Error adding to daily movie history:", error.message, error.code);
+      console.error(
+        "Error updating daily movie history:",
+        error.message,
+        error.code
+      );
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error("Error adding to daily movie history:", error);
+    console.error("Error updating daily movie history:", error);
     return false;
   }
 }

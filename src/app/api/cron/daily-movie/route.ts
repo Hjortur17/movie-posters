@@ -88,7 +88,7 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
       return null;
     }
 
-    // Exclude movies used in the last 200 days; fall back to full list if none left (Option A)
+    // Exclude movies used in the last 200 days (from database); fall back to full list if none left (Option A)
     let candidates = moviesWithPosters.filter((m) => !recentIds.has(m.id));
     if (candidates.length === 0) {
       console.warn(
@@ -98,8 +98,17 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
     }
 
     // Use seeded random to pick a movie (deterministic based on date)
-    const randomIndex = Math.floor(seededRandom(seed) * candidates.length);
-    const selectedMovie = candidates[randomIndex];
+    let randomIndex = Math.floor(seededRandom(seed) * candidates.length);
+    let selectedMovie = candidates[randomIndex];
+
+    // Defensive check: if the chosen movie was used recently (e.g. after fallback), pick another that is not in history
+    while (recentIds.has(selectedMovie.id) && candidates.length > 1) {
+      candidates = candidates.filter((m) => m.id !== selectedMovie.id);
+      randomIndex = Math.floor(
+        seededRandom(seed + candidates.length) * candidates.length
+      );
+      selectedMovie = candidates[randomIndex];
+    }
 
     // Get full movie details
     const movieUrl = `${TMDB_API_BASE}/movie/${selectedMovie.id}`;
@@ -170,7 +179,9 @@ export async function GET(request: NextRequest) {
     const dateString = today.toISOString().split("T")[0];
     const gameId = getDailyGameId(today);
 
-    console.log(`[Cron] Fetching daily movie for ${dateString} (game_id: ${gameId})`);
+    console.log(
+      `[Cron] Fetching daily movie for ${dateString} (game_id: ${gameId})`
+    );
 
     // Fetch the daily movie
     const movie = await fetchDailyMovie(dateString);
@@ -183,12 +194,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Store in database
-    const stored = await storeDailyMovieInDB(gameId, movie);
+    const storeResult = await storeDailyMovieInDB(gameId, movie);
 
-    if (!stored) {
-      console.error("Failed to store daily movie in database");
+    if (!storeResult.success) {
+      console.error(
+        "Failed to store daily movie in database:",
+        storeResult.error
+      );
       return NextResponse.json(
-        { error: "Failed to store daily movie in database" },
+        {
+          error: "Failed to store daily movie in database",
+          details: storeResult.error,
+        },
         { status: 500 }
       );
     }

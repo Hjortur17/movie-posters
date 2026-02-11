@@ -95,4 +95,35 @@ CREATE POLICY "Allow public daily movie update"
   USING (true)
   WITH CHECK (true);
 
+-- Daily movie history: one row per date with TMDB movie_id (for 200-day exclusion)
+CREATE TABLE IF NOT EXISTS daily_movie_history (
+  game_id TEXT PRIMARY KEY,
+  movie_id INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_daily_movie_history_movie_id ON daily_movie_history(movie_id);
+CREATE INDEX IF NOT EXISTS idx_daily_movie_history_game_id ON daily_movie_history(game_id);
+
+ALTER TABLE daily_movie_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public daily movie history reading"
+  ON daily_movie_history
+  FOR SELECT
+  TO anon, authenticated
+  USING (true);
+
+CREATE POLICY "Allow public daily movie history write"
+  ON daily_movie_history
+  FOR INSERT
+  TO anon, authenticated
+  WITH CHECK (true);
+
+CREATE POLICY "Allow public daily movie history update"
+  ON daily_movie_history
+  FOR UPDATE
+  TO anon, authenticated
+  USING (true)
+  WITH CHECK (true);
+
 

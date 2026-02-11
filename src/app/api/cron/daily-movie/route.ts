@@ -1,7 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getDailyGameId } from "@/lib/game";
-import { storeDailyMovieInDB } from "@/lib/daily-movies";
+import {
+  addToDailyMovieHistory,
+  getRecentlyUsedMovieIds,
+  storeDailyMovieInDB,
+} from "@/lib/daily-movies";
 import type { Movie } from "@/lib/tmdb";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
@@ -21,6 +25,8 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
   }
 
   try {
+    const recentIds = await getRecentlyUsedMovieIds();
+
     // Create a seed from the date (YYYY-MM-DD format)
     const [year, month, day] = dateString.split("-").map(Number);
     const seed = year * 10000 + month * 100 + day;
@@ -82,11 +88,18 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
       return null;
     }
 
+    // Exclude movies used in the last 200 days; fall back to full list if none left (Option A)
+    let candidates = moviesWithPosters.filter((m) => !recentIds.has(m.id));
+    if (candidates.length === 0) {
+      console.warn(
+        "[Cron] All candidates were recently used; falling back to full list for 200-day exclusion"
+      );
+      candidates = moviesWithPosters;
+    }
+
     // Use seeded random to pick a movie (deterministic based on date)
-    const randomIndex = Math.floor(
-      seededRandom(seed) * moviesWithPosters.length
-    );
-    const selectedMovie = moviesWithPosters[randomIndex];
+    const randomIndex = Math.floor(seededRandom(seed) * candidates.length);
+    const selectedMovie = candidates[randomIndex];
 
     // Get full movie details
     const movieUrl = `${TMDB_API_BASE}/movie/${selectedMovie.id}`;
@@ -179,6 +192,8 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    await addToDailyMovieHistory(gameId, movie.id);
 
     console.log(
       `[Cron] Successfully stored daily movie: ${movie.title} (ID: ${movie.id}) for ${dateString}`

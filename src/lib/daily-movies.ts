@@ -98,3 +98,77 @@ export async function storeDailyMovieInDB(
     return false;
   }
 }
+
+const RECENT_DAYS = 200;
+
+/**
+ * Get TMDB movie IDs that have been used as the daily movie in the last 200 days.
+ * Used to exclude them when picking the next daily movie.
+ */
+export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return new Set();
+  }
+
+  const today = new Date();
+  const cutoff = new Date(today);
+  cutoff.setUTCDate(cutoff.getUTCDate() - RECENT_DAYS);
+  const cutoffYear = cutoff.getUTCFullYear();
+  const cutoffMonth = String(cutoff.getUTCMonth() + 1).padStart(2, "0");
+  const cutoffDay = String(cutoff.getUTCDate()).padStart(2, "0");
+  const cutoffDate = `${cutoffYear}-${cutoffMonth}-${cutoffDay}`;
+
+  try {
+    const { data, error } = await supabase
+      .from("daily_movie_history")
+      .select("movie_id")
+      .gte("game_id", cutoffDate);
+
+    if (error) {
+      console.error("Error fetching recently used movie IDs:", error);
+      return new Set();
+    }
+
+    return new Set((data ?? []).map((row) => row.movie_id));
+  } catch (error) {
+    console.error("Error fetching recently used movie IDs:", error);
+    return new Set();
+  }
+}
+
+/**
+ * Record that a movie was used as the daily movie for the given date.
+ * Call only from the cron after successfully storing in daily_movies.
+ */
+export async function addToDailyMovieHistory(
+  gameId: string,
+  movieId: number
+): Promise<boolean> {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    console.warn("Supabase not configured, cannot add to daily movie history");
+    return false;
+  }
+
+  try {
+    const { error } = await supabase.from("daily_movie_history").upsert(
+      {
+        game_id: gameId,
+        movie_id: movieId,
+        created_at: new Date().toISOString(),
+      },
+      { onConflict: "game_id" }
+    );
+
+    if (error) {
+      console.error("Error adding to daily movie history:", error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error adding to daily movie history:", error);
+    return false;
+  }
+}

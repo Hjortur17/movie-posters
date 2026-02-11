@@ -71,15 +71,13 @@ export const GameBoard = () => {
           }
         }
 
-        // If no valid saved state, fetch new movie
-        const isDevelopment =
-          typeof window !== "undefined" &&
-          (window.location.hostname === "localhost" ||
-            window.location.hostname === "127.0.0.1");
+        // If no valid saved state, or dev features enabled, fetch new movie
+        const devFeaturesEnabled =
+          process.env.NEXT_PUBLIC_DEV_FEATURES === "true";
 
-        if (!state || !movie || isDevelopment) {
-          // In development, always fetch a new movie each time
-          movie = await getDailyMovie(today, isDevelopment);
+        if (!state || !movie || devFeaturesEnabled) {
+          // When dev features are on, always fetch a new movie each time
+          movie = await getDailyMovie(today, devFeaturesEnabled);
           // Ensure we have full movie details with relationship data
           try {
             const fullDetails = await getMovieDetails(movie.id);
@@ -232,14 +230,26 @@ export const GameBoard = () => {
             Guess {gameState.currentGuess + 1} of 5
           </p>
 
-          <button
-            type="button"
-            onClick={() => setStatsOpen(true)}
-            className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
-            title="View your statistics"
-          >
-            📊 Stats
-          </button>
+          <div className="space-x-2">
+            {gameState.isComplete && (
+              <button
+                type="button"
+                onClick={() => setStatsOpen(true)}
+                className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
+                title="View your statistics"
+              >
+                ↗️ Share
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setStatsOpen(true)}
+              className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
+              title="View your statistics"
+            >
+              📊 Stats
+            </button>
+          </div>
         </div>
         <MovieSearch
           onSelect={handleMovieSelect}

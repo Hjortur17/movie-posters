@@ -45,8 +45,10 @@ export async function GET(request: NextRequest) {
     const [year, month, day] = dateString.split("-").map(Number);
     let seed = year * 10000 + month * 100 + day;
 
-    // In development mode or when forceNew is true, add timestamp for randomness
-    if (process.env.NODE_ENV === "development" || forceNew) {
+    // When dev features are enabled or forceNew is true, add timestamp for randomness
+    const devFeaturesEnabled =
+      process.env.NEXT_PUBLIC_DEV_FEATURES === "true";
+    if (devFeaturesEnabled || forceNew) {
       // Use current timestamp to get different movies each time
       const timestamp = Date.now();
       seed = seed + (timestamp % 1000000);

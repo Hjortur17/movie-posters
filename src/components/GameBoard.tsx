@@ -18,6 +18,7 @@ import { ScoreDisplay } from "./ScoreDisplay";
 import type { MovieSearchResult } from "@/lib/tmdb";
 import type { Movie } from "@/lib/tmdb";
 import { UserStats } from "./UserStats";
+import { getShareText, copyShareToClipboard } from "@/lib/share";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
@@ -30,6 +31,7 @@ export const GameBoard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   // Load or initialize game
   useEffect(() => {
@@ -234,11 +236,29 @@ export const GameBoard = () => {
             {gameState.isComplete && (
               <button
                 type="button"
-                onClick={() => setStatsOpen(true)}
+                onClick={async () => {
+                  if (!gameState || !currentMovie || !gameState.isComplete) return;
+                  const shareText = getShareText(gameState, currentMovie);
+                  const success = await copyShareToClipboard(shareText);
+                  if (success) {
+                    setShareCopied(true);
+                    setTimeout(() => setShareCopied(false), 2000);
+                  } else {
+                    if (navigator.share) {
+                      try {
+                        await navigator.share({ text: shareText });
+                      } catch {
+                        alert(`Copy failed – try again. Or share this:\n\n${shareText}`);
+                      }
+                    } else {
+                      alert(`Copy failed – try again. Or copy manually:\n\n${shareText}`);
+                    }
+                  }
+                }}
                 className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
-                title="View your statistics"
+                title="Copy score to clipboard"
               >
-                ↗️ Share
+                {shareCopied ? "Copied!" : "↗️ Share"}
               </button>
             )}
             <button

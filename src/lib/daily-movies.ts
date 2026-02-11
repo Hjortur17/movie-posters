@@ -152,17 +152,17 @@ export async function addToDailyMovieHistory(
   }
 
   try {
-    const { error } = await supabase.from("daily_movie_history").upsert(
-      {
-        game_id: gameId,
-        movie_id: movieId,
-        created_at: new Date().toISOString(),
-      },
-      { onConflict: "game_id" }
-    );
+    const { error } = await supabase.from("daily_movie_history").insert({
+      game_id: gameId,
+      movie_id: movieId,
+    });
 
     if (error) {
-      console.error("Error adding to daily movie history:", error);
+      // Duplicate key (cron ran twice for same day) - treat as success
+      if (error.code === "23505") {
+        return true;
+      }
+      console.error("Error adding to daily movie history:", error.message, error.code);
       return false;
     }
 

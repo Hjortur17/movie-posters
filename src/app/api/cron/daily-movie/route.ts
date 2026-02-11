@@ -193,7 +193,14 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await addToDailyMovieHistory(gameId, movie.id);
+    const historyStored = await addToDailyMovieHistory(gameId, movie.id);
+    if (!historyStored) {
+      console.error("Failed to store daily movie in history table");
+      return NextResponse.json(
+        { error: "Failed to store daily movie in history table" },
+        { status: 500 }
+      );
+    }
 
     console.log(
       `[Cron] Successfully stored daily movie: ${movie.title} (ID: ${movie.id}) for ${dateString}`

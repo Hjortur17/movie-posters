@@ -1,24 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  getDailyGameId,
-  getPixelationLevel,
   createInitialGameState,
-  updateGameState,
   type GameState,
+  getDailyGameId,
+  getDisplayDate,
+  getPixelationLevel,
+  getPuzzleNumber,
+  skipGuess,
+  updateGameState,
 } from "@/lib/game";
+import { getUserScores, submitScore } from "@/lib/scores";
+import { deriveStats } from "@/lib/stats";
+import type { Movie, MovieSearchResult } from "@/lib/tmdb";
+import { getDailyMovie, getMovieDetails, getPosterUrl } from "@/lib/tmdb";
 import { getAnonymousId } from "@/lib/user";
-import { getDailyMovie, getPosterUrl, getMovieDetails } from "@/lib/tmdb";
-import { submitScore } from "@/lib/scores";
-import { MovieSearch } from "./MovieSearch";
+import { GuessList } from "./GuessList";
 import { MoviePoster } from "./MoviePoster";
-import { GuessHistory } from "./GuessHistory";
+import { MovieSearch } from "./MovieSearch";
 import { ScoreDisplay } from "./ScoreDisplay";
-import type { MovieSearchResult } from "@/lib/tmdb";
-import type { Movie } from "@/lib/tmdb";
+import { TopBar } from "./TopBar";
 import { UserStats } from "./UserStats";
-import { getShareText, copyShareToClipboard } from "@/lib/share";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
@@ -31,7 +34,11 @@ export const GameBoard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
-  const [shareCopied, setShareCopied] = useState(false);
+  const [currentStreak, setCurrentStreak] = useState<number | null>(null);
+
+  const today = new Date();
+  const puzzleNumber = getPuzzleNumber(today);
+  const dateLabel = getDisplayDate(today);
 
   // Load or initialize game
   useEffect(() => {
@@ -122,6 +129,32 @@ export const GameBoard = () => {
     initializeGame();
   }, []);
 
+  // Load streak for the footer line; refresh once a game completes.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run when the game completes
+  useEffect(() => {
+    const loadStreak = async () => {
+      try {
+        const scores = await getUserScores(getAnonymousId());
+        setCurrentStreak(deriveStats(scores).currentStreak);
+      } catch {
+        setCurrentStreak(0);
+      }
+    };
+    loadStreak();
+  }, [gameState?.isComplete]);
+
+  const persistAndMaybeSubmit = useCallback(async (newState: GameState) => {
+    setGameState(newState);
+    localStorage.setItem(GAME_STATE_KEY, JSON.stringify(newState));
+    if (newState.isComplete) {
+      try {
+        await submitScore(newState, getAnonymousId());
+      } catch (err) {
+        console.error("Error submitting score:", err);
+      }
+    }
+  }, []);
+
   const handleMovieSelect = useCallback(
     async (selectedMovie: MovieSearchResult) => {
       if (!gameState || !currentMovie || gameState.isComplete) {
@@ -130,7 +163,7 @@ export const GameBoard = () => {
 
       // Fetch full movie details to get relationship info
       let guessCollectionId: number | null = null;
-      let guessYear: number | undefined = undefined;
+      let guessYear: number | undefined;
       let guessDirectorId: number | null = null;
       let guessGenreIds: number[] = [];
       let guessProductionCompanyIds: number[] = [];
@@ -161,139 +194,120 @@ export const GameBoard = () => {
         productionCompanyIds: guessProductionCompanyIds,
       };
       const newState = updateGameState(gameState, guess, isCorrect);
-
-      setGameState(newState);
-
-      // Save updated state
-      localStorage.setItem(GAME_STATE_KEY, JSON.stringify(newState));
-
-      // Submit score if game is complete
-      if (newState.isComplete) {
-        try {
-          const anonymousId = getAnonymousId();
-          await submitScore(newState, anonymousId);
-        } catch (err) {
-          console.error("Error submitting score:", err);
-        }
-      }
+      await persistAndMaybeSubmit(newState);
     },
-    [gameState, currentMovie],
+    [gameState, currentMovie, persistAndMaybeSubmit],
   );
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="text-lg mb-2">Loading today's movie...</div>
-          <div className="text-sm text-gray-500">Please wait</div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="text-center">
-          <div className="text-lg text-red-600 mb-2">Error</div>
-          <div className="text-sm text-gray-600">{error}</div>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!gameState || !currentMovie) {
-    return null;
-  }
-
-  // Show unfiltered image (0% pixelation) when game is complete, otherwise use progressive pixelation
-  const pixelationLevel = gameState.isComplete
-    ? 0
-    : getPixelationLevel(gameState.currentGuess);
+  const handleSkip = useCallback(async () => {
+    if (!gameState || gameState.isComplete) return;
+    await persistAndMaybeSubmit(skipGuess(gameState));
+  }, [gameState, persistAndMaybeSubmit]);
 
   return (
-    <div className="w-full flex items-end max-w-4xl mx-auto justify-between gap-10">
-      <MoviePoster imageUrl={posterUrl} pixelationLevel={pixelationLevel} />
+    <div className="flex min-h-screen flex-col px-5 pb-8 pt-7 sm:px-10">
+      <TopBar
+        puzzleNumber={puzzleNumber}
+        dateLabel={dateLabel}
+        onOpenStats={() => setStatsOpen(true)}
+      />
 
-      <div className="flex-1">
-        {gameState.guesses.length > 0 && (
-          <GuessHistory gameState={gameState} correctMovie={currentMovie} />
-        )}
-
-        <div className="mb-2 mt-6 flex justify-between items-center">
-          <p className="text-sm text-gray-600">
-            Guess {gameState.currentGuess + 1} of 5
-          </p>
-
-          <div className="space-x-2">
-            {gameState.isComplete && (
-              <button
-                type="button"
-                onClick={async () => {
-                  if (!gameState || !currentMovie || !gameState.isComplete) return;
-                  const shareText = getShareText(gameState, currentMovie);
-                  const success = await copyShareToClipboard(shareText);
-                  if (success) {
-                    setShareCopied(true);
-                    setTimeout(() => setShareCopied(false), 2000);
-                  } else {
-                    if (navigator.share) {
-                      try {
-                        await navigator.share({ text: shareText });
-                      } catch {
-                        alert(`Copy failed – try again. Or share this:\n\n${shareText}`);
-                      }
-                    } else {
-                      alert(`Copy failed – try again. Or copy manually:\n\n${shareText}`);
-                    }
-                  }
-                }}
-                className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
-                title="Copy score to clipboard"
-              >
-                {shareCopied ? "Copied!" : "↗️ Share"}
-              </button>
-            )}
+      {error ? (
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="mb-2 text-lg text-crimson">
+              Couldn&apos;t load today&apos;s poster
+            </div>
+            <div className="text-sm text-cn-dim">{error}</div>
             <button
               type="button"
-              onClick={() => setStatsOpen(true)}
-              className="px-2.5 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-md text-sm uppercase font-bold tracking-wider transition-colors"
-              title="View your statistics"
+              onClick={() => window.location.reload()}
+              className="mt-4 bg-amber px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-(--cn-bg) hover:bg-amber-hover"
             >
-              📊 Stats
+              Retry
             </button>
           </div>
         </div>
-        <MovieSearch
-          onSelect={handleMovieSelect}
-          disabled={gameState.isComplete}
-        />
-      </div>
+      ) : (
+        <div className="grid flex-1 items-center gap-14 py-10 lg:grid-cols-[1fr_1.05fr]">
+          {/* Poster column */}
+          <div className="flex justify-center">
+            <MoviePoster
+              imageUrl={posterUrl}
+              pixelationLevel={
+                gameState
+                  ? gameState.isComplete
+                    ? 0
+                    : getPixelationLevel(gameState.currentGuess)
+                  : 80
+              }
+              guessNumber={gameState ? gameState.currentGuess + 1 : 1}
+            />
+          </div>
 
-      {gameState.isComplete && (
-        <ScoreDisplay gameState={gameState} correctMovie={currentMovie} />
-      )}
+          {/* Right column */}
+          <div className="flex w-full max-w-[480px] flex-col gap-[22px]">
+            <div>
+              <div className="mb-2.5 text-[11px] uppercase tracking-[0.22em] text-amber">
+                Today&apos;s poster
+              </div>
+              <h1 className="font-serif text-[52px] font-medium leading-[1.02] tracking-[-0.015em] text-cn-text">
+                Name the <em className="italic text-amber">movie</em> behind the
+                pixels.
+              </h1>
+              <p className="mt-3.5 max-w-[420px] text-[14.5px] leading-[1.55] text-cn-dim">
+                Five guesses. Each one sharpens the image. Type a title or skip
+                to peel away another layer.
+              </p>
+            </div>
 
-      {gameState.isComplete && !gameState.won && (
-        <div className="mt-6 p-4 bg-gray-100 rounded-lg">
-          <p className="font-semibold mb-2">The correct answer was:</p>
-          <p className="text-xl">{currentMovie.title}</p>
-          {currentMovie.release_date && (
-            <p className="text-sm text-gray-600 mt-1">
-              ({new Date(currentMovie.release_date).getFullYear()})
-            </p>
-          )}
+            {isLoading || !gameState || !currentMovie ? (
+              <div className="py-8 text-sm uppercase tracking-[0.14em] text-cn-faint">
+                Loading today&apos;s movie…
+              </div>
+            ) : (
+              <>
+                <GuessList gameState={gameState} correctMovie={currentMovie} />
+
+                <MovieSearch
+                  onSelect={handleMovieSelect}
+                  disabled={gameState.isComplete}
+                />
+
+                <div className="flex items-center justify-between text-xs text-cn-faint">
+                  <button
+                    type="button"
+                    onClick={handleSkip}
+                    disabled={gameState.isComplete}
+                    className="cursor-pointer underline decoration-cn-faint underline-offset-[3px] transition-colors hover:text-cn-dim disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Skip — sharpen anyway
+                  </button>
+                  <span>
+                    Streak ·{" "}
+                    <span className="text-cn-text">
+                      {currentStreak ?? 0} days
+                    </span>
+                  </span>
+                </div>
+
+                <ScoreDisplay
+                  gameState={gameState}
+                  correctMovie={currentMovie}
+                  onOpenStats={() => setStatsOpen(true)}
+                />
+              </>
+            )}
+          </div>
         </div>
       )}
 
-      <UserStats isOpen={statsOpen} onOpenChange={setStatsOpen} />
+      <UserStats
+        isOpen={statsOpen}
+        onOpenChange={setStatsOpen}
+        gameState={gameState}
+        correctMovie={currentMovie}
+      />
     </div>
   );
 };

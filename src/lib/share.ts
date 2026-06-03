@@ -4,11 +4,11 @@ import type { Movie } from "@/lib/tmdb";
 
 /**
  * Builds the share text (emoji grid + score line + URL).
- * Uses 🟩 correct, 🟨 related, 🟥 wrong, ⬛ not attempted.
+ * Uses 🟩 correct, 🟧 skipped, 🟨 related, 🟥 wrong, ⬛ not attempted.
  */
 export function getShareText(
   gameState: GameState,
-  correctMovie: Movie
+  correctMovie: Movie,
 ): string {
   const gameId = gameState.gameId;
   const dateParts = gameId.split("-");
@@ -24,6 +24,8 @@ export function getShareText(
       const isRelated = !isCorrect && areMoviesRelated(guess, correctMovie);
       if (isCorrect) {
         emojis.push("🟩");
+      } else if (guess.skipped) {
+        emojis.push("🟧");
       } else if (isRelated) {
         emojis.push("🟨");
       } else {
@@ -35,15 +37,14 @@ export function getShareText(
   }
 
   const emojiGrid = emojis.join("");
-  const scoreText = gameState.won
-    ? `🎉 ${gameState.currentGuess}/5`
-    : "❌ 0/5";
+  const scoreText = gameState.won ? `🎉 ${gameState.currentGuess}/5` : "❌ 0/5";
 
   const baseUrl =
     typeof window !== "undefined"
       ? window.location.hostname +
         (window.location.port ? `:${window.location.port}` : "")
-      : process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ?? "localhost:3000";
+      : (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ??
+        "localhost:3000");
 
   const isProduction =
     typeof window !== "undefined"

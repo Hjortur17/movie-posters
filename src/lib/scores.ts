@@ -1,5 +1,5 @@
-import { supabase } from "./supabase";
 import type { GameState } from "./game";
+import { supabase } from "./supabase";
 
 export interface Score {
   id: string;
@@ -14,7 +14,7 @@ export interface Score {
 
 export async function submitScore(
   gameState: GameState,
-  anonymousId: string
+  anonymousId: string,
 ): Promise<void> {
   if (!supabase) {
     console.warn("Supabase not configured, skipping score submission");
@@ -63,7 +63,7 @@ export async function getUserScores(anonymousId: string): Promise<Score[]> {
 
 export async function getLeaderboard(
   gameId: string,
-  limit = 10
+  limit = 10,
 ): Promise<Score[]> {
   if (!supabase) {
     console.warn("Supabase not configured, returning empty leaderboard");

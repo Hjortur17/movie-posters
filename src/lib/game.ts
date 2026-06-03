@@ -8,6 +8,7 @@ export interface Guess {
   directorId?: number | null;
   genreIds?: number[];
   productionCompanyIds?: number[];
+  skipped?: boolean; // True when the player skipped this turn (no input)
 }
 
 export interface GameState {
@@ -49,7 +50,7 @@ export function areMoviesRelated(
     director_id?: number;
     genres?: Array<{ id: number }>;
     production_companies?: Array<{ id: number }>;
-  }
+  },
 ): boolean {
   // Same franchise/collection - strongest relationship
   if (
@@ -81,7 +82,7 @@ export function areMoviesRelated(
   ) {
     const correctGenreIds = correctMovie.genres.map((g) => g.id);
     const commonGenres = guess.genreIds.filter((id) =>
-      correctGenreIds.includes(id)
+      correctGenreIds.includes(id),
     );
     // Require at least 3 common genres to be considered related
     if (commonGenres.length >= 3) {
@@ -97,7 +98,7 @@ export function areMoviesRelated(
 
 export function calculateScore(
   guessNumber: number,
-  isCorrect: boolean
+  isCorrect: boolean,
 ): number {
   if (!isCorrect) {
     return 0;
@@ -113,7 +114,7 @@ export function calculateScore(
 
 export function createInitialGameState(
   gameId: string,
-  movie: Movie
+  movie: Movie,
 ): GameState {
   return {
     gameId,
@@ -130,7 +131,7 @@ export function createInitialGameState(
 export function updateGameState(
   state: GameState,
   guess: Guess,
-  isCorrect: boolean
+  isCorrect: boolean,
 ): GameState {
   const newGuesses = [...state.guesses, guess];
   const newGuessNumber = state.currentGuess + 1;
@@ -146,4 +147,57 @@ export function updateGameState(
     won,
     score,
   };
+}
+
+// Skip the current turn: consumes a guess without input and sharpens the poster.
+// A skip is never correct and never wins; it only advances the reveal level.
+export function skipGuess(state: GameState): GameState {
+  return updateGameState(state, { title: "Skipped", skipped: true }, false);
+}
+
+// ---- Daily puzzle helpers ----
+
+// Hardcoded launch epoch so 2026-06-03 reads as puzzle "No. 247".
+export const LAUNCH_DATE_UTC = Date.UTC(2025, 8, 30); // 2025-09-30 (month is 0-indexed)
+
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+
+// Sequential puzzle number (No. 1 = LAUNCH_DATE).
+export function getPuzzleNumber(date: Date): number {
+  const todayUTC = Date.UTC(
+    date.getUTCFullYear(),
+    date.getUTCMonth(),
+    date.getUTCDate(),
+  );
+  return Math.floor((todayUTC - LAUNCH_DATE_UTC) / MS_PER_DAY) + 1;
+}
+
+// "03 Jun 2026" style label, in UTC to match the puzzle-day boundary.
+export function getDisplayDate(date: Date): string {
+  const day = String(date.getUTCDate()).padStart(2, "0");
+  const month = date.toLocaleString("en-US", {
+    month: "short",
+    timeZone: "UTC",
+  });
+  const year = date.getUTCFullYear();
+  return `${day} ${month} ${year}`;
+}
+
+// Milliseconds remaining until the next UTC midnight (when the poster rotates).
+export function getMsUntilNextUTCMidnight(now: Date = new Date()): number {
+  const nextMidnight = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate() + 1,
+  );
+  return nextMidnight - now.getTime();
+}
+
+// Format a millisecond duration as HH:MM:SS.
+export function formatCountdown(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const h = String(Math.floor(total / 3600)).padStart(2, "0");
+  const m = String(Math.floor((total % 3600) / 60)).padStart(2, "0");
+  const s = String(total % 60).padStart(2, "0");
+  return `${h}:${m}:${s}`;
 }

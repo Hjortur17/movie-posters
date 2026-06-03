@@ -7,12 +7,14 @@ interface MoviePosterProps {
   imageUrl: string | null;
   pixelationLevel: number;
   alt?: string;
+  guessNumber?: number; // 1-based current guess, for the caption row
 }
 
 export const MoviePoster = ({
   imageUrl,
   pixelationLevel,
   alt = "Movie poster",
+  guessNumber,
 }: MoviePosterProps) => {
   const [pixelatedUrl, setPixelatedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -57,74 +59,80 @@ export const MoviePoster = ({
       });
   }, [imageUrl, pixelationLevel]);
 
-  if (!imageUrl) {
-    return (
-      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-400">No poster available</span>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
-  // CRITICAL: Never show original image if pixelation is required
-  // Only show pixelated version or loading state
-  if (pixelationLevel > 0 && !pixelatedUrl) {
-    return (
-      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
-
   // CRITICAL: Only use pixelated URL, never original if pixelation is required
   const imageSrc = pixelatedUrl || (pixelationLevel === 0 ? imageUrl : null);
-
-  if (!imageSrc) {
-    return (
-      <div className="w-full aspect-2/3 max-w-[400px] bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-400">Loading...</span>
-      </div>
-    );
-  }
+  const showPlaceholder = !imageUrl || isLoading || !imageSrc;
 
   return (
-    <div className="w-full aspect-2/3 max-w-[400px] rounded-lg overflow-hidden bg-transparent relative">
-      {/** biome-ignore lint/performance/noImgElement: <> */}
-      <img
-        src={imageSrc}
-        alt={alt}
-        className="w-full h-full object-contain"
+    <div className="relative">
+      {/* Amber spotlight glow behind the frame */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute -inset-x-[60px] -inset-y-10 rounded-full"
         style={{
-          imageRendering: pixelationLevel === 0 ? "auto" : "pixelated",
-        }}
-        loading="eager"
-        fetchPriority="high"
-        onError={() => {
-          // If image fails to load and pixelation is required, keep loading state
-          if (pixelationLevel > 0) {
-            setIsLoading(true);
-          }
+          background:
+            "radial-gradient(ellipse, rgba(232,176,74,0.10) 0%, transparent 60%)",
+          filter: "blur(20px)",
         }}
       />
-      {/* Safety overlay: Additional blur protection in case pixelation fails */}
-      {pixelationLevel > 0 && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            backdropFilter: "blur(5px)",
-            WebkitBackdropFilter: "blur(5px)",
-            mixBlendMode: "multiply",
-            opacity: 0.3,
-          }}
-        />
-      )}
+
+      {/* Frame */}
+      <div
+        className="relative border border-line-strong bg-ink p-1.5"
+        style={{
+          boxShadow:
+            "0 30px 60px -20px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.03)",
+        }}
+      >
+        <div className="relative h-[480px] w-[320px] max-w-full overflow-hidden bg-black">
+          {showPlaceholder ? (
+            <div className="cn-shimmer flex h-full w-full items-center justify-center">
+              <span className="text-xs uppercase tracking-[0.14em] text-cn-faint">
+                {!imageUrl ? "No poster" : "Developing…"}
+              </span>
+            </div>
+          ) : (
+            <>
+              {/** biome-ignore lint/performance/noImgElement: pixelated data URL */}
+              <img
+                src={imageSrc}
+                alt={alt}
+                className="h-full w-full object-cover transition-opacity duration-300"
+                style={{
+                  imageRendering: pixelationLevel === 0 ? "auto" : "pixelated",
+                }}
+                loading="eager"
+                fetchPriority="high"
+                onError={() => {
+                  if (pixelationLevel > 0) setIsLoading(true);
+                }}
+              />
+              {/* Safety overlay: additional blur protection in case pixelation fails */}
+              {pixelationLevel > 0 && (
+                <div
+                  className="pointer-events-none absolute inset-0"
+                  style={{
+                    backdropFilter: "blur(5px)",
+                    WebkitBackdropFilter: "blur(5px)",
+                    mixBlendMode: "multiply",
+                    opacity: 0.3,
+                  }}
+                />
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Caption row */}
+        <div className="flex items-center justify-between px-1 pb-0.5 pt-2.5 text-[10px] uppercase tracking-[0.14em] text-cn-faint">
+          <span>Now showing</span>
+          <span>
+            {guessNumber && pixelationLevel > 0
+              ? `Guess ${Math.min(guessNumber, 5)} / 5`
+              : "Revealed"}
+          </span>
+        </div>
+      </div>
     </div>
   );
 };

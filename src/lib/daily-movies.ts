@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import type { Movie } from "./tmdb";
 import { getDailyGameId } from "./game";
+import type { Movie } from "./tmdb";
 
 // Get Supabase client with anon/publishable key
 function getSupabaseClient() {
@@ -67,7 +67,7 @@ export type StoreDailyMovieResult =
  */
 export async function storeDailyMovieInDB(
   gameId: string,
-  movie: Movie
+  movie: Movie,
 ): Promise<StoreDailyMovieResult> {
   const supabase = getSupabaseClient();
   if (!supabase) {
@@ -87,7 +87,7 @@ export async function storeDailyMovieInDB(
       },
       {
         onConflict: "game_id",
-      }
+      },
     );
 
     if (error) {
@@ -138,7 +138,7 @@ export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
     return new Set(
       (data ?? [])
         .filter((row): row is { movie_id: number } => row.movie_id != null)
-        .map((row) => row.movie_id)
+        .map((row) => row.movie_id),
     );
   } catch (error) {
     console.error("Error fetching recently used movie IDs:", error);
@@ -152,7 +152,7 @@ export async function getRecentlyUsedMovieIds(): Promise<Set<number>> {
  */
 export async function addToDailyMovieHistory(
   gameId: string,
-  movieId: number
+  movieId: number,
 ): Promise<boolean> {
   const supabase = getSupabaseClient();
   if (!supabase) {
@@ -170,7 +170,7 @@ export async function addToDailyMovieHistory(
       console.error(
         "Error updating daily movie history:",
         error.message,
-        error.code
+        error.code,
       );
       return false;
     }

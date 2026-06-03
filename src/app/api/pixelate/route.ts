@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     if (!imageUrl || !level) {
       return NextResponse.json(
         { error: "Missing url or level parameter" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     ) {
       return NextResponse.json(
         { error: "Invalid pixelation level" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (!imageResponse.ok) {
       return NextResponse.json(
         { error: "Failed to fetch image" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     console.error("Error in pixelate route:", error);
     return NextResponse.json(
       { error: "Failed to pixelate image" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

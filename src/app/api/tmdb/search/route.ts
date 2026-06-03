@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
       url.searchParams.set("page", page.toString());
       // Filter to only include movies released on or before today
       url.searchParams.set("primary_release_date.lte", todayString);
-      
+
       const response = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${apiKey}`,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
           console.error("TMDB API error:", response.status, errorText);
           return NextResponse.json(
             { error: `TMDB API error: ${response.status}` },
-            { status: response.status }
+            { status: response.status },
           );
         }
         // If later pages fail, continue with what we have
@@ -66,9 +66,13 @@ export async function GET(request: NextRequest) {
       // (Client-side filter as backup, since search endpoint may not support date filtering)
       const todayForComparison = new Date();
       todayForComparison.setHours(0, 0, 0, 0); // Set to start of day for comparison
-      
+
       const pageResults = data.results.filter(
-        (movie: { id: number; poster_path: string | null; release_date?: string }) => {
+        (movie: {
+          id: number;
+          poster_path: string | null;
+          release_date?: string;
+        }) => {
           if (!movie.poster_path || !movie.id) {
             return false;
           }
@@ -79,7 +83,7 @@ export async function GET(request: NextRequest) {
           const releaseDate = new Date(movie.release_date);
           releaseDate.setHours(0, 0, 0, 0);
           return releaseDate <= todayForComparison;
-        }
+        },
       ) as TMDBMovie[];
       allResults.push(...pageResults);
 
@@ -109,7 +113,7 @@ export async function GET(request: NextRequest) {
     console.error("Error searching movies:", error);
     return NextResponse.json(
       { error: "Failed to search movies" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

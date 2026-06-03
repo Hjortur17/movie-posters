@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
@@ -49,5 +49,3 @@ export async function GET(
     );
   }
 }
-
-

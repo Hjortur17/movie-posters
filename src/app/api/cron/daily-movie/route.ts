@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getDailyGameId } from "@/lib/game";
 import {
   addToDailyMovieHistory,
   getRecentlyUsedMovieIds,
   storeDailyMovieInDB,
 } from "@/lib/daily-movies";
+import { getDailyGameId } from "@/lib/game";
 import type { Movie } from "@/lib/tmdb";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
@@ -50,7 +50,7 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
         url.searchParams.set("vote_average.gte", "4.5");
         url.searchParams.set(
           "primary_release_date.gte",
-          `${minReleaseYear}-01-01`
+          `${minReleaseYear}-01-01`,
         );
         url.searchParams.set("page", page.toString());
 
@@ -92,7 +92,7 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
     let candidates = moviesWithPosters.filter((m) => !recentIds.has(m.id));
     if (candidates.length === 0) {
       console.warn(
-        "[Cron] All candidates were recently used; falling back to full list for 200-day exclusion"
+        "[Cron] All candidates were recently used; falling back to full list for 200-day exclusion",
       );
       candidates = moviesWithPosters;
     }
@@ -105,7 +105,7 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
     while (recentIds.has(selectedMovie.id) && candidates.length > 1) {
       candidates = candidates.filter((m) => m.id !== selectedMovie.id);
       randomIndex = Math.floor(
-        seededRandom(seed + candidates.length) * candidates.length
+        seededRandom(seed + candidates.length) * candidates.length,
       );
       selectedMovie = candidates[randomIndex];
     }
@@ -141,7 +141,7 @@ async function fetchDailyMovie(dateString: string): Promise<Movie | null> {
           crew?: Array<{ job: string; id: number }>;
         };
         const director = credits.crew?.find(
-          (person) => person.job === "Director"
+          (person) => person.job === "Director",
         );
         movie.director_id = director?.id || undefined;
       }
@@ -180,7 +180,7 @@ export async function GET(request: NextRequest) {
     const gameId = getDailyGameId(today);
 
     console.log(
-      `[Cron] Fetching daily movie for ${dateString} (game_id: ${gameId})`
+      `[Cron] Fetching daily movie for ${dateString} (game_id: ${gameId})`,
     );
 
     // Fetch the daily movie
@@ -189,7 +189,7 @@ export async function GET(request: NextRequest) {
     if (!movie) {
       return NextResponse.json(
         { error: "Failed to fetch daily movie" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -199,14 +199,14 @@ export async function GET(request: NextRequest) {
     if (!storeResult.success) {
       console.error(
         "Failed to store daily movie in database:",
-        storeResult.error
+        storeResult.error,
       );
       return NextResponse.json(
         {
           error: "Failed to store daily movie in database",
           details: storeResult.error,
         },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -215,12 +215,12 @@ export async function GET(request: NextRequest) {
       console.error("Failed to store daily movie in history table");
       return NextResponse.json(
         { error: "Failed to store daily movie in history table" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
     console.log(
-      `[Cron] Successfully stored daily movie: ${movie.title} (ID: ${movie.id}) for ${dateString}`
+      `[Cron] Successfully stored daily movie: ${movie.title} (ID: ${movie.id}) for ${dateString}`,
     );
 
     return NextResponse.json({
@@ -235,7 +235,7 @@ export async function GET(request: NextRequest) {
     console.error("Error in cron job:", error);
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

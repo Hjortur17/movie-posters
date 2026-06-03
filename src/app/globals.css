@@ -6,8 +6,24 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-fraunces);
+  --font-mono: var(--font-inter);
+
+  /* Cinema Noir palette */
+  --color-ink: var(--cn-bg-ink);
+  --color-well: var(--cn-bg-well);
+  --color-line: var(--cn-line);
+  --color-line-strong: var(--cn-line-strong);
+  --color-cn-text: var(--cn-text);
+  --color-cn-dim: var(--cn-text-dim);
+  --color-cn-faint: var(--cn-text-faint);
+  --color-amber: var(--cn-amber);
+  --color-amber-dim: var(--cn-amber-dim);
+  --color-amber-hover: var(--cn-amber-hover);
+  --color-crimson: var(--cn-crimson);
+  --color-good: var(--cn-good);
+  --color-skip: var(--cn-skip);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -44,6 +60,23 @@
 }
 
 :root {
+  /* Cinema Noir — V1 tokens */
+  --cn-bg: #0c0a09;
+  --cn-bg-ink: #161311;
+  --cn-bg-well: #070605;
+  --cn-line: rgba(255, 255, 255, 0.08);
+  --cn-line-strong: rgba(255, 255, 255, 0.14);
+  --cn-text: #f5ede0;
+  --cn-text-dim: #a39a8c;
+  --cn-text-faint: #5d564b;
+  --cn-amber: #e8b04a;
+  --cn-amber-dim: #8a6a2a;
+  --cn-amber-hover: #d49d3a;
+  --cn-crimson: #c4392a;
+  --cn-crimson-dim: #5a1a14;
+  --cn-good: #7fa860;
+  --cn-skip: #a39a8c;
+
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
@@ -117,6 +150,58 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: var(--cn-bg);
+    color: var(--cn-text);
+    font-family: var(--font-inter), system-ui, sans-serif;
+  }
+  /* Subtle theatrical vignette over the whole page */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at 50% 30%,
+      transparent 0%,
+      rgba(0, 0, 0, 0.55) 100%
+    );
+  }
+}
+
+.font-serif {
+  font-family: var(--font-fraunces), "Times New Roman", serif;
+}
+
+/* PosterQuest poster reveal cross-fade */
+@keyframes cn-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.cn-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--cn-bg-ink) 0%,
+    #1a1614 50%,
+    var(--cn-bg-ink) 100%
+  );
+  background-size: 200% 100%;
+  animation: cn-shimmer 1.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    /* biome-ignore lint/complexity/noImportantStyles: accessibility override must win over utility classes */
+    animation-duration: 0.001ms !important;
+    /* biome-ignore lint/complexity/noImportantStyles: accessibility override must win over utility classes */
+    animation-iteration-count: 1 !important;
+    /* biome-ignore lint/complexity/noImportantStyles: accessibility override must win over utility classes */
+    transition-duration: 0.001ms !important;
   }
 }

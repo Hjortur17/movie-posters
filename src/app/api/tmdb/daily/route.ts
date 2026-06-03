@@ -1,6 +1,9 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getDailyMovieFromDB, getRecentlyUsedMovieIds } from "@/lib/daily-movies";
+import {
+  getDailyMovieFromDB,
+  getRecentlyUsedMovieIds,
+} from "@/lib/daily-movies";
 
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
@@ -26,7 +29,10 @@ export async function GET(request: NextRequest) {
       }
     } catch (error) {
       // If database lookup fails, fall back to computation
-      console.warn("Error fetching from database, falling back to computation:", error);
+      console.warn(
+        "Error fetching from database, falling back to computation:",
+        error,
+      );
     }
   }
 
@@ -34,7 +40,7 @@ export async function GET(request: NextRequest) {
   if (!apiKey) {
     return NextResponse.json(
       { error: "TMDB API key not configured" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 
@@ -46,8 +52,7 @@ export async function GET(request: NextRequest) {
     let seed = year * 10000 + month * 100 + day;
 
     // When dev features are enabled or forceNew is true, add timestamp for randomness
-    const devFeaturesEnabled =
-      process.env.NEXT_PUBLIC_DEV_FEATURES === "true";
+    const devFeaturesEnabled = process.env.NEXT_PUBLIC_DEV_FEATURES === "true";
     if (devFeaturesEnabled || forceNew) {
       // Use current timestamp to get different movies each time
       const timestamp = Date.now();
@@ -75,7 +80,7 @@ export async function GET(request: NextRequest) {
         url.searchParams.set("vote_average.gte", "4.5"); // At least 6.0 rating
         url.searchParams.set(
           "primary_release_date.gte",
-          `${minReleaseYear}-01-01`
+          `${minReleaseYear}-01-01`,
         );
         url.searchParams.set("page", page.toString());
 
@@ -92,7 +97,7 @@ export async function GET(request: NextRequest) {
             console.error("TMDB API error:", response.status, errorText);
             return NextResponse.json(
               { error: `TMDB API error: ${response.status}` },
-              { status: response.status }
+              { status: response.status },
             );
           }
           // If later pages fail, continue with what we have
@@ -106,7 +111,7 @@ export async function GET(request: NextRequest) {
           console.error("Error fetching blockbuster movies:", error);
           return NextResponse.json(
             { error: "Failed to fetch blockbuster movies" },
-            { status: 500 }
+            { status: 500 },
           );
         }
         // Continue with movies from previous pages
@@ -120,7 +125,7 @@ export async function GET(request: NextRequest) {
     if (moviesWithPosters.length === 0) {
       return NextResponse.json(
         { error: "No movies with posters found" },
-        { status: 500 }
+        { status: 500 },
       );
     }
 
@@ -128,7 +133,7 @@ export async function GET(request: NextRequest) {
     let candidates = moviesWithPosters.filter((m) => !recentIds.has(m.id));
     if (candidates.length === 0) {
       console.warn(
-        "[Daily] All candidates were recently used; falling back to full list for 200-day exclusion"
+        "[Daily] All candidates were recently used; falling back to full list for 200-day exclusion",
       );
       candidates = moviesWithPosters;
     }
@@ -151,7 +156,7 @@ export async function GET(request: NextRequest) {
       console.error("TMDB API error:", movieResponse.status, errorText);
       return NextResponse.json(
         { error: `TMDB API error: ${movieResponse.status}` },
-        { status: movieResponse.status }
+        { status: movieResponse.status },
       );
     }
 
@@ -161,7 +166,7 @@ export async function GET(request: NextRequest) {
     console.error("Error fetching daily movie:", error);
     return NextResponse.json(
       { error: "Failed to fetch daily movie" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

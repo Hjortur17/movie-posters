@@ -1,13 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/components/ui/input-group";
-import { searchMovies, type MovieSearchResult } from "@/lib/tmdb";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { type MovieSearchResult, searchMovies } from "@/lib/tmdb";
 
 interface MovieSearchProps {
   onSelect: (movie: MovieSearchResult) => void;
@@ -75,8 +69,10 @@ export const MovieSearch = ({
       setSelectedIndex((prev) => (prev > 0 ? prev - 1 : -1));
     } else if (e.key === "Enter") {
       e.preventDefault();
-      if (selectedIndex >= 0 && suggestions[selectedIndex]) {
-        handleSelect(suggestions[selectedIndex]);
+      const pick =
+        selectedIndex >= 0 ? suggestions[selectedIndex] : suggestions[0];
+      if (pick) {
+        handleSelect(pick);
       }
     } else if (e.key === "Escape") {
       setShowSuggestions(false);
@@ -101,13 +97,20 @@ export const MovieSearch = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const submitTopPick = () => {
+    if (disabled) return;
+    const pick =
+      selectedIndex >= 0 ? suggestions[selectedIndex] : suggestions[0];
+    if (pick) handleSelect(pick);
+  };
+
   return (
     <div className="relative w-full">
-      <InputGroup className="bg-white h-16">
-        <InputGroupInput
+      <div className="flex h-[52px] items-center border border-line-strong bg-ink py-1 pl-[18px] pr-1 transition-colors focus-within:border-[rgba(232,176,74,0.35)] focus-within:ring-2 focus-within:ring-[rgba(232,176,74,0.4)]">
+        <input
           ref={inputRef}
-          placeholder="Type to search..."
-          className="text-lg!"
+          placeholder="Type a movie title…"
+          className="min-w-0 flex-1 border-none bg-transparent text-[15px] text-cn-text outline-none placeholder:text-cn-faint disabled:opacity-50"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -118,34 +121,33 @@ export const MovieSearch = ({
           }}
           disabled={disabled}
         />
-        <InputGroupAddon align="inline-end">
-          <InputGroupButton
-            variant="dark"
-            className="h-full text-base px-6 uppercase font-black"
-            disabled={disabled || isLoading}
-          >
-            {isLoading ? "..." : "Search"}
-          </InputGroupButton>
-        </InputGroupAddon>
-      </InputGroup>
+        <button
+          type="button"
+          onClick={submitTopPick}
+          disabled={disabled || isLoading || suggestions.length === 0}
+          className="h-full cursor-pointer bg-amber px-[22px] text-[13px] font-semibold uppercase tracking-[0.14em] text-(--cn-bg) transition-colors hover:bg-amber-hover disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          {isLoading ? "…" : "Guess"}
+        </button>
+      </div>
 
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto border border-line-strong bg-ink shadow-lg"
         >
           {suggestions.map((movie, index) => (
             <button
               key={movie.id}
               type="button"
-              className={`w-full text-left px-4 py-3 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none ${
-                index === selectedIndex ? "bg-gray-100" : ""
+              className={`w-full border-b border-line px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[rgba(232,176,74,0.08)] focus:outline-none ${
+                index === selectedIndex ? "bg-[rgba(232,176,74,0.08)]" : ""
               }`}
               onClick={() => handleSelect(movie)}
             >
-              <div className="font-medium">{movie.title}</div>
+              <div className="text-[14.5px] text-cn-text">{movie.title}</div>
               {movie.release_date && (
-                <div className="text-sm text-gray-500">
+                <div className="text-xs text-cn-dim">
                   {new Date(movie.release_date).getFullYear()}
                 </div>
               )}

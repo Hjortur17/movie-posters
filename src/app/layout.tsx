@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Fraunces, Inter } from "next/font/google";
 import "./globals.css";
-import { Navbar } from "@/components/Navbar";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "PosterQuest - Daily Movie Guessing Game",
+  title: "PosterQuest — Name the movie behind the pixels",
   description:
     "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
 };
@@ -26,12 +28,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Navbar />
-
-        <main className="container mx-auto px-4 py-8">{children}</main>
+      <body className={`${fraunces.variable} ${inter.variable} antialiased`}>
+        <div className="relative z-1 min-h-screen">{children}</div>
       </body>
     </html>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import type { GameState } from "@/lib/game";
-import { areMoviesRelated } from "@/lib/game";
+import { getGuessKind } from "@/lib/guess-kind";
 import type { Movie } from "@/lib/tmdb";
 
 interface GuessListProps {
@@ -11,111 +11,114 @@ interface GuessListProps {
 
 type RowKind = "hit" | "miss" | "link" | "skipped" | "active" | "locked";
 
+/** Left edge bar + status text colour for each row state. */
 const ACCENT: Record<RowKind, string> = {
-  hit: "var(--cn-good)",
-  miss: "var(--cn-crimson)",
-  link: "var(--cn-amber-dim)",
-  skipped: "var(--cn-line-strong)",
-  active: "var(--cn-amber)",
-  locked: "var(--cn-line)",
+  hit: "var(--pq-green)",
+  miss: "var(--pq-red)",
+  link: "var(--pq-amber)",
+  skipped: "var(--pq-skip)",
+  active: "var(--pq-cyan)",
+  locked: "var(--pq-line-dim)",
 };
 
 const STATUS_LABEL: Record<RowKind, string> = {
-  hit: "Hit",
-  miss: "Miss",
-  link: "Link",
-  skipped: "Skipped",
-  active: "Active",
-  locked: "Locked",
+  hit: "HIT",
+  miss: "MISS",
+  link: "LINK",
+  skipped: "SKIP",
+  active: "ACTIVE",
+  locked: "LOCKED",
 };
 
-const STATUS_COLOR: Record<RowKind, string> = {
-  hit: "text-good",
-  miss: "text-crimson",
-  link: "text-amber",
-  skipped: "text-cn-dim",
-  active: "text-amber",
-  locked: "text-cn-faint",
-};
+/** Resolve the state of row `i` on the board. */
+export function getRowKind(
+  gameState: GameState,
+  index: number,
+  correctMovie?: Movie,
+): RowKind {
+  const guess = gameState.guesses[index];
+  if (guess) {
+    return correctMovie ? getGuessKind(guess, correctMovie) : "miss";
+  }
+  if (!gameState.isComplete && index === gameState.currentGuess) {
+    return "active";
+  }
+  return "locked";
+}
 
 export const GuessList = ({ gameState, correctMovie }: GuessListProps) => {
-  const rows = Array.from({ length: 5 }, (_, i) => i);
-
   return (
-    <div className="flex flex-col gap-2">
-      {rows.map((i) => {
+    <div className="flex flex-col gap-[clamp(3px,0.8vh,7px)]">
+      {Array.from({ length: 5 }, (_, i) => {
         const guess = gameState.guesses[i];
-        const isActive = !gameState.isComplete && i === gameState.currentGuess;
-
-        let kind: RowKind = "locked";
-        if (guess) {
-          if (guess.skipped) {
-            kind = "skipped";
-          } else if (correctMovie) {
-            const isCorrect = guess.movieId
-              ? guess.movieId === correctMovie.id
-              : guess.title.toLowerCase().trim() ===
-                correctMovie.title.toLowerCase().trim();
-            if (isCorrect && gameState.isComplete) {
-              kind = "hit";
-            } else if (!isCorrect && areMoviesRelated(guess, correctMovie)) {
-              kind = "link";
-            } else {
-              kind = "miss";
-            }
-          } else {
-            kind = "miss";
-          }
-        } else if (isActive) {
-          kind = "active";
-        }
+        const kind = getRowKind(gameState, i, correctMovie);
+        const isActive = kind === "active";
+        const isLocked = kind === "locked";
 
         return (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 guess slots, index is the row identity
             key={`guess-row-${i}`}
-            className="grid min-h-[44px] items-center gap-3.5 border border-line px-3.5 py-2.5"
+            className="grid min-h-[clamp(24px,4.4vh,44px)] items-center gap-3 border-[3px] px-3.5 py-[clamp(3px,0.7vh,7px)]"
             style={{
-              gridTemplateColumns: "32px 1fr auto",
-              borderLeft: `2px solid ${ACCENT[kind]}`,
-              backgroundColor:
-                kind === "active" ? "rgba(232,176,74,0.08)" : "transparent",
-              borderColor:
-                kind === "active" ? "rgba(232,176,74,0.33)" : "var(--cn-line)",
+              gridTemplateColumns: "38px 1fr auto",
+              borderColor: isActive
+                ? "var(--pq-active-line)"
+                : isLocked
+                  ? "var(--pq-line-faint)"
+                  : "var(--pq-line-dim)",
+              borderLeft: `8px solid ${ACCENT[kind]}`,
+              backgroundColor: isActive
+                ? "var(--pq-active-bg)"
+                : isLocked
+                  ? "transparent"
+                  : "var(--pq-panel)",
             }}
           >
             <span
-              className="text-center font-serif text-lg italic"
+              className="font-press text-[11px]"
               style={{
-                color:
-                  kind === "active"
-                    ? "var(--cn-amber)"
-                    : "var(--cn-text-faint)",
+                color: isActive
+                  ? "var(--pq-cyan)"
+                  : isLocked
+                    ? "var(--pq-locked)"
+                    : "var(--pq-faint)",
               }}
             >
               {String(i + 1).padStart(2, "0")}
             </span>
 
-            <span className="text-[14.5px]">
+            <span
+              className="truncate text-[17px] tracking-[1px] lg:text-[clamp(15px,2.5vh,21px)]"
+              style={{
+                color: isActive
+                  ? "var(--pq-cyan)"
+                  : isLocked
+                    ? "var(--pq-locked)"
+                    : kind === "skipped"
+                      ? "var(--pq-faint)"
+                      : "var(--pq-text)",
+              }}
+            >
               {guess && !guess.skipped ? (
-                <span className="text-cn-text">
-                  {guess.title}
+                <>
+                  {guess.title.toUpperCase()}
                   {guess.year && (
-                    <span className="ml-2 text-cn-dim">({guess.year})</span>
+                    <span className="ml-2 text-pq-muted">({guess.year})</span>
                   )}
-                </span>
+                </>
               ) : guess?.skipped ? (
-                <span className="text-cn-dim italic">Skipped this turn</span>
+                "SKIPPED THIS TURN"
               ) : isActive ? (
-                <span className="text-[13px] tracking-[0.06em] text-amber">
-                  Your turn —
-                </span>
+                "YOUR TURN —"
               ) : (
-                <span className="tracking-[0.04em] text-cn-faint">—</span>
+                "—"
               )}
             </span>
 
             <span
-              className={`text-[10px] uppercase tracking-[0.18em] ${STATUS_COLOR[kind]}`}
+              className="font-press text-[8px] tracking-[2px]"
+              style={{ color: ACCENT[kind] }}
             >
               {STATUS_LABEL[kind]}
             </span>
@@ -125,3 +128,23 @@ export const GuessList = ({ gameState, correctMovie }: GuessListProps) => {
     </div>
   );
 };
+
+/** Five-segment progress strip that mirrors the guess rows under the poster. */
+export const GuessPips = ({ gameState, correctMovie }: GuessListProps) => (
+  <div className="flex gap-1.5">
+    {Array.from({ length: 5 }, (_, i) => {
+      const kind = getRowKind(gameState, i, correctMovie);
+      return (
+        <div
+          // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 guess slots, index is the pip identity
+          key={`pip-${i}`}
+          className="h-3 flex-1 border-2 border-pq-line-dim"
+          style={{
+            backgroundColor:
+              kind === "locked" ? "var(--pq-panel-2)" : ACCENT[kind],
+          }}
+        />
+      );
+    })}
+  </div>
+);

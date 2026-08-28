@@ -1,24 +1,28 @@
 import type { Metadata } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Press_Start_2P, VT323 } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+const pressStart = Press_Start_2P({
+  variable: "--font-press-start",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  style: ["normal", "italic"],
+  weight: ["400"],
+  display: "swap",
 });
 
-const inter = Inter({
-  variable: "--font-inter",
+const vt323 = VT323({
+  variable: "--font-vt323",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "PosterQuest — Name the movie behind the pixels",
+  title: "PosterQuest — Name the film behind the pixels",
   description:
     "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
+  icons: {
+    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
@@ -28,8 +32,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${fraunces.variable} ${inter.variable} antialiased`}>
-        <div className="relative z-1 min-h-screen">{children}</div>
+      <body className={`${pressStart.variable} ${vt323.variable} antialiased`}>
+        {children}
       </body>
     </html>
   );

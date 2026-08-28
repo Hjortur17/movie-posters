@@ -106,11 +106,12 @@ export const MovieSearch = ({
 
   return (
     <div className="relative w-full">
-      <div className="flex h-[52px] items-center border border-line-strong bg-ink py-1 pl-[18px] pr-1 transition-colors focus-within:border-[rgba(232,176,74,0.35)] focus-within:ring-2 focus-within:ring-[rgba(232,176,74,0.4)]">
+      <div className="flex flex-wrap gap-3">
         <input
           ref={inputRef}
-          placeholder="Type a movie title…"
-          className="min-w-0 flex-1 border-none bg-transparent text-[15px] text-cn-text outline-none placeholder:text-cn-faint disabled:opacity-50"
+          type="text"
+          placeholder="SEARCH A MOVIE TITLE..."
+          className="min-w-[200px] flex-1 border-4 border-pq-line bg-pq-panel px-4 py-[clamp(6px,1.3vh,12px)] text-[19px] tracking-[1px] lg:text-[clamp(16px,2.6vh,23px)] text-pq-text outline-none disabled:opacity-50"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -125,31 +126,36 @@ export const MovieSearch = ({
           type="button"
           onClick={submitTopPick}
           disabled={disabled || isLoading || suggestions.length === 0}
-          className="h-full cursor-pointer bg-amber px-[22px] text-[13px] font-semibold uppercase tracking-[0.14em] text-(--cn-bg) transition-colors hover:bg-amber-hover disabled:cursor-not-allowed disabled:opacity-50"
+          className="pq-btn pq-btn--primary px-[22px] py-[clamp(9px,1.7vh,16px)] text-[11px]"
         >
-          {isLoading ? "…" : "Guess"}
+          {isLoading ? "…" : "▶ GUESS"}
         </button>
       </div>
 
       {showSuggestions && suggestions.length > 0 && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 mt-1 max-h-60 w-full overflow-auto border border-line-strong bg-ink shadow-lg"
+          // Opens upward: the input sits low in the fixed-height board, so a
+          // downward menu would be clipped by the footer.
+          className="absolute bottom-full z-50 mb-1.5 max-h-60 w-full overflow-auto border-4 border-pq-line bg-pq-panel"
+          style={{ boxShadow: "8px -8px 0 rgba(0,0,0,0.6)" }}
         >
           {suggestions.map((movie, index) => (
             <button
               key={movie.id}
               type="button"
-              className={`w-full border-b border-line px-4 py-3 text-left transition-colors last:border-b-0 hover:bg-[rgba(232,176,74,0.08)] focus:outline-none ${
-                index === selectedIndex ? "bg-[rgba(232,176,74,0.08)]" : ""
+              className={`block w-full cursor-pointer border-b-2 border-pq-line-dim px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-pq-active-bg focus:outline-none ${
+                index === selectedIndex ? "bg-pq-active-bg" : ""
               }`}
               onClick={() => handleSelect(movie)}
             >
-              <div className="text-[14.5px] text-cn-text">{movie.title}</div>
+              <span className="text-[19px] tracking-[1px] text-pq-text">
+                {movie.title.toUpperCase()}
+              </span>
               {movie.release_date && (
-                <div className="text-xs text-cn-dim">
-                  {new Date(movie.release_date).getFullYear()}
-                </div>
+                <span className="ml-2 text-[17px] text-pq-muted">
+                  ({new Date(movie.release_date).getFullYear()})
+                </span>
               )}
             </button>
           ))}

@@ -1,31 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { GameState } from "@/lib/game";
-import { copyShareToClipboard, getShareText } from "@/lib/share";
-import type { Movie } from "@/lib/tmdb";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
+  copyShareToClipboard,
+  getShareDayNumber,
+  getShareSquares,
+  getShareText,
+} from "@/lib/share";
+import type { Movie } from "@/lib/tmdb";
+import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 
 interface ScoreDisplayProps {
   gameState: GameState;
   correctMovie: Movie;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onOpenStats: () => void;
 }
 
-const ShareResultButton = ({
+export const ScoreDisplay = ({
   gameState,
   correctMovie,
-}: {
-  gameState: GameState;
-  correctMovie: Movie;
-}) => {
+  open,
+  onOpenChange,
+  onOpenStats,
+}: ScoreDisplayProps) => {
   const [copied, setCopied] = useState(false);
+
+  if (!gameState.isComplete) {
+    return null;
+  }
+
+  const won = gameState.won;
+  const accent = won ? "var(--pq-green)" : "var(--pq-red)";
+  const year = correctMovie.release_date
+    ? new Date(correctMovie.release_date).getFullYear()
+    : null;
+
   const handleShare = async () => {
     const text = getShareText(gameState, correctMovie);
     const ok = await copyShareToClipboard(text);
@@ -40,95 +52,76 @@ const ShareResultButton = ({
       }
     }
   };
+
   return (
-    <button
-      type="button"
-      onClick={handleShare}
-      className="cursor-pointer bg-amber px-[22px] py-3 text-xs font-semibold uppercase tracking-[0.18em] text-(--cn-bg) transition-colors hover:bg-amber-hover"
-    >
-      {copied ? "Copied!" : "Share result"}
-    </button>
-  );
-};
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showClose={false}
+        className="max-h-[90vh] max-w-[520px] overflow-y-auto border-4 bg-pq-panel p-[30px] text-pq-text"
+        style={{
+          borderColor: accent,
+          boxShadow: "14px 14px 0 rgba(0,0,0,0.7)",
+        }}
+      >
+        <div className="mb-[18px] flex items-start justify-between gap-4">
+          <DialogTitle
+            className="font-press text-[15px] leading-[1.5] tracking-[2px]"
+            style={{ color: accent }}
+          >
+            {won ? "★ NICE RUN" : "GAME OVER"}
+          </DialogTitle>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            aria-label="Close result"
+            className="pq-close text-[10px]"
+          >
+            [X]
+          </button>
+        </div>
 
-const StatsButton = ({ onOpenStats }: { onOpenStats: () => void }) => (
-  <button
-    type="button"
-    onClick={onOpenStats}
-    className="cursor-pointer border border-line-strong px-[22px] py-3 text-xs font-semibold uppercase tracking-[0.18em] text-cn-dim transition-colors hover:text-cn-text"
-  >
-    View stats
-  </button>
-);
+        <div className="mb-2 text-[22px] tracking-[1px] text-pq-dim">
+          THE FILM WAS{" "}
+          <span className="text-pq-text">
+            {correctMovie.title.toUpperCase()}
+          </span>
+          {year && ` (${year})`} —{" "}
+          {won
+            ? `SOLVED IN ${gameState.currentGuess} / 5`
+            : "BETTER LUCK TOMORROW"}
+        </div>
 
-export const ScoreDisplay = ({
-  gameState,
-  correctMovie,
-  onOpenStats,
-}: ScoreDisplayProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+        <div className="mb-5 font-press text-[10px] tracking-[1px] text-pq-amber">
+          SCORE {gameState.score} PTS
+        </div>
 
-  useEffect(() => {
-    if (gameState.isComplete && gameState.won) {
-      setIsOpen(true);
-    }
-  }, [gameState.isComplete, gameState.won]);
-
-  if (!gameState.isComplete) {
-    return null;
-  }
-
-  const year = correctMovie.release_date
-    ? new Date(correctMovie.release_date).getFullYear()
-    : null;
-
-  if (gameState.won) {
-    return (
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent
-          showClose
-          className="w-full max-w-[480px] border-line-strong bg-(--cn-bg) p-8 text-cn-text sm:rounded-none"
-        >
-          <DialogHeader className="space-y-0 text-left">
-            <DialogDescription className="mb-1.5 text-[11px] uppercase tracking-[0.22em] text-amber">
-              Curtains
-            </DialogDescription>
-            <DialogTitle className="font-serif text-4xl font-medium tracking-[-0.01em] text-cn-text">
-              You named it.
-            </DialogTitle>
-          </DialogHeader>
-          <p className="text-[14.5px] leading-[1.55] text-cn-dim">
-            Solved in{" "}
-            <span className="text-cn-text">{gameState.currentGuess}</span> of 5
-            — <span className="text-cn-text">{correctMovie.title}</span>
-            {year && <span className="text-cn-dim"> ({year})</span>}.
-          </p>
-          <div className="mt-2 flex gap-3">
-            <ShareResultButton
-              gameState={gameState}
-              correctMovie={correctMovie}
-            />
-            <StatsButton onOpenStats={onOpenStats} />
+        {/* Shareable result card */}
+        <div className="mb-[22px] border-[3px] border-pq-line-dim bg-pq-footer p-4">
+          <div className="mb-2.5 font-press text-[8px] tracking-[2px] text-pq-faint">
+            #POSTERQUEST #{getShareDayNumber(gameState)}
           </div>
-        </DialogContent>
-      </Dialog>
-    );
-  }
+          <div className="text-[26px] leading-none tracking-[6px]">
+            {getShareSquares(gameState, correctMovie).join("")}
+          </div>
+        </div>
 
-  // Loss — inline dark reveal
-  return (
-    <div className="border border-line-strong bg-ink p-5">
-      <div className="mb-1.5 text-[11px] uppercase tracking-[0.22em] text-crimson">
-        Out of guesses
-      </div>
-      <div className="font-serif text-2xl text-cn-text">
-        {correctMovie.title}
-        {year && <span className="text-cn-dim"> ({year})</span>}
-      </div>
-      <div className="mt-4 flex gap-3">
-        <ShareResultButton gameState={gameState} correctMovie={correctMovie} />
-        <StatsButton onOpenStats={onOpenStats} />
-      </div>
-    </div>
+        <div className="flex flex-wrap gap-3.5">
+          <button
+            type="button"
+            onClick={handleShare}
+            className="pq-btn pq-btn--primary px-5 py-3.5 text-[10px]"
+          >
+            {copied ? "✓ COPIED" : "⇪ SHARE SCORE"}
+          </button>
+          <button
+            type="button"
+            onClick={onOpenStats}
+            className="pq-btn pq-btn--ghost px-[18px] py-2.5 text-[10px]"
+          >
+            HIGH SCORES
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 };

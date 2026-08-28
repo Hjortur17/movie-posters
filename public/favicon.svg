@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="64" height="64" shape-rendering="crispEdges" role="img" aria-label="PosterQuest">
+  <title>PosterQuest favicon</title>
+  <rect width="16" height="16" fill="#0B0910"></rect>
+  <g fill="#FFC53D">
+    <rect x="1" y="1" width="4" height="1"></rect><rect x="1" y="1" width="1" height="4"></rect>
+    <rect x="11" y="1" width="4" height="1"></rect><rect x="14" y="1" width="1" height="4"></rect>
+    <rect x="1" y="14" width="4" height="1"></rect><rect x="1" y="11" width="1" height="4"></rect>
+    <rect x="11" y="14" width="4" height="1"></rect><rect x="14" y="11" width="1" height="4"></rect>
+  </g>
+  <rect x="5" y="3" width="6" height="10" fill="#F2EAD8"></rect>
+  <rect x="5" y="3" width="6" height="1" fill="#C9A02E"></rect>
+  <g fill="#0B0910">
+    <rect x="6" y="5" width="3" height="1"></rect>
+    <rect x="9" y="5" width="1" height="2"></rect>
+    <rect x="8" y="7" width="1" height="1"></rect>
+    <rect x="7" y="8" width="1" height="2"></rect>
+    <rect x="7" y="11" width="1" height="1"></rect>
+  </g>
+</svg>

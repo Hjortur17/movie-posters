@@ -1,42 +1,39 @@
 import type { GameState } from "@/lib/game";
-import { areMoviesRelated } from "@/lib/game";
+import { getPuzzleNumber } from "@/lib/game";
+import { EMPTY_SQUARE, getGuessKind, KIND_SQUARE } from "@/lib/guess-kind";
 import type { Movie } from "@/lib/tmdb";
 
 /**
+ * The five result squares for a finished (or in-progress) board.
+ * 🟩 correct, 🟨 related, 🟧 skipped, 🟥 wrong, ⬛ not attempted.
+ * Rendered in the result modal and reused verbatim in the copied share text.
+ */
+export function getShareSquares(
+  gameState: GameState,
+  correctMovie: Movie,
+): string[] {
+  return Array.from({ length: 5 }, (_, i) => {
+    const guess = gameState.guesses[i];
+    return guess
+      ? KIND_SQUARE[getGuessKind(guess, correctMovie)]
+      : EMPTY_SQUARE;
+  });
+}
+
+/** Puzzle number for the share caption — the same "NO." shown in the header. */
+export function getShareDayNumber(gameState: GameState): number {
+  const [y, m, d] = gameState.gameId.split("-").map(Number);
+  return getPuzzleNumber(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/**
  * Builds the share text (emoji grid + score line + URL).
- * Uses 🟩 correct, 🟧 skipped, 🟨 related, 🟥 wrong, ⬛ not attempted.
  */
 export function getShareText(
   gameState: GameState,
   correctMovie: Movie,
 ): string {
-  const gameId = gameState.gameId;
-  const dateParts = gameId.split("-");
-  const dayNumber =
-    parseInt(dateParts[0] + dateParts[1] + dateParts[2], 10) % 10000;
-
-  const emojis: string[] = [];
-  for (let i = 0; i < 5; i++) {
-    if (i < gameState.guesses.length) {
-      const guess = gameState.guesses[i];
-      const isCorrect =
-        guess.movieId !== undefined && guess.movieId === correctMovie.id;
-      const isRelated = !isCorrect && areMoviesRelated(guess, correctMovie);
-      if (isCorrect) {
-        emojis.push("🟩");
-      } else if (guess.skipped) {
-        emojis.push("🟧");
-      } else if (isRelated) {
-        emojis.push("🟨");
-      } else {
-        emojis.push("🟥");
-      }
-    } else {
-      emojis.push("⬛");
-    }
-  }
-
-  const emojiGrid = emojis.join("");
+  const emojiGrid = getShareSquares(gameState, correctMovie).join("");
   const scoreText = gameState.won ? `🎉 ${gameState.currentGuess}/5` : "❌ 0/5";
 
   const baseUrl =
@@ -53,7 +50,7 @@ export function getShareText(
   const protocol = isProduction ? "https" : "http";
   const url = `${protocol}://${baseUrl}`;
 
-  return `#PosterQuest #${dayNumber}\n${emojiGrid} ${scoreText}\n${url}`;
+  return `#PosterQuest #${getShareDayNumber(gameState)}\n${emojiGrid} ${scoreText}\n${url}`;
 }
 
 /**

@@ -6,24 +6,34 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-fraunces);
-  --font-mono: var(--font-inter);
+  --font-sans: var(--font-vt323);
+  --font-mono: var(--font-vt323);
+  --font-press: var(--font-press-start);
 
-  /* Cinema Noir palette */
-  --color-ink: var(--cn-bg-ink);
-  --color-well: var(--cn-bg-well);
-  --color-line: var(--cn-line);
-  --color-line-strong: var(--cn-line-strong);
-  --color-cn-text: var(--cn-text);
-  --color-cn-dim: var(--cn-text-dim);
-  --color-cn-faint: var(--cn-text-faint);
-  --color-amber: var(--cn-amber);
-  --color-amber-dim: var(--cn-amber-dim);
-  --color-amber-hover: var(--cn-amber-hover);
-  --color-crimson: var(--cn-crimson);
-  --color-good: var(--cn-good);
-  --color-skip: var(--cn-skip);
+  /* PosterQuest arcade palette */
+  --color-pq-bg: var(--pq-bg);
+  --color-pq-panel: var(--pq-panel);
+  --color-pq-panel-2: var(--pq-panel-2);
+  --color-pq-footer: var(--pq-footer);
+  --color-pq-line: var(--pq-line);
+  --color-pq-line-dim: var(--pq-line-dim);
+  --color-pq-line-faint: var(--pq-line-faint);
+  --color-pq-text: var(--pq-text);
+  --color-pq-dim: var(--pq-dim);
+  --color-pq-muted: var(--pq-muted);
+  --color-pq-faint: var(--pq-faint);
+  --color-pq-locked: var(--pq-locked);
+  --color-pq-amber: var(--pq-amber);
+  --color-pq-amber-soft: var(--pq-amber-soft);
+  --color-pq-amber-shadow: var(--pq-amber-shadow);
+  --color-pq-red: var(--pq-red);
+  --color-pq-green: var(--pq-green);
+  --color-pq-cyan: var(--pq-cyan);
+  --color-pq-meta: var(--pq-meta);
+  --color-pq-meta-line: var(--pq-meta-line);
+  --color-pq-skip: var(--pq-skip);
+  --color-pq-active-bg: var(--pq-active-bg);
+  --color-pq-active-line: var(--pq-active-line);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -60,22 +70,34 @@
 }
 
 :root {
-  /* Cinema Noir — V1 tokens */
-  --cn-bg: #0c0a09;
-  --cn-bg-ink: #161311;
-  --cn-bg-well: #070605;
-  --cn-line: rgba(255, 255, 255, 0.08);
-  --cn-line-strong: rgba(255, 255, 255, 0.14);
-  --cn-text: #f5ede0;
-  --cn-text-dim: #a39a8c;
-  --cn-text-faint: #5d564b;
-  --cn-amber: #e8b04a;
-  --cn-amber-dim: #8a6a2a;
-  --cn-amber-hover: #d49d3a;
-  --cn-crimson: #c4392a;
-  --cn-crimson-dim: #5a1a14;
-  --cn-good: #7fa860;
-  --cn-skip: #a39a8c;
+  /* PosterQuest — 8-bit arcade tokens */
+  --pq-bg: #0b0910;
+  --pq-panel: #161020;
+  --pq-panel-2: #1a1422;
+  --pq-footer: #100c17;
+  --pq-line: #3a2e45;
+  --pq-line-dim: #2a2033;
+  --pq-line-faint: #1d1726;
+  --pq-text: #f2ead8;
+  --pq-dim: #b6a88c;
+  --pq-muted: #9a8c74;
+  --pq-faint: #77694f;
+  --pq-locked: #4a3e5a;
+  --pq-amber: #ffc53d;
+  --pq-amber-soft: #ffe9a8;
+  --pq-amber-shadow: #7a5a05;
+  --pq-red: #ff3b5c;
+  --pq-green: #7ce04a;
+  --pq-cyan: #4cc9f0;
+  /* Header meta strip runs cool rather than warm, matching LogoQuest. */
+  --pq-meta: #7c86a8;
+  --pq-meta-line: #2a3457;
+  --pq-meta-panel: #141a2e;
+  --pq-meta-text: #e6ecff;
+  --pq-skip: #4a3a5a;
+  --pq-active-bg: #10202e;
+  --pq-active-line: #2a5a78;
+  --pq-placeholder: #6b5b3a;
 
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -147,50 +169,201 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
+  html,
   body {
-    background-color: var(--cn-bg);
-    color: var(--cn-text);
-    font-family: var(--font-inter), system-ui, sans-serif;
+    background-color: var(--pq-bg);
+    color: var(--pq-text);
+    font-family: var(--font-vt323), ui-monospace, monospace;
   }
-  /* Subtle theatrical vignette over the whole page */
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background: radial-gradient(
-      ellipse at 50% 30%,
-      transparent 0%,
-      rgba(0, 0, 0, 0.55) 100%
-    );
+  a {
+    color: var(--pq-amber);
+    text-decoration: none;
+  }
+  a:hover {
+    color: var(--pq-amber-soft);
+  }
+  ::selection {
+    background: var(--pq-amber);
+    color: var(--pq-bg);
+  }
+  :focus-visible {
+    outline: 4px solid var(--pq-amber);
+    outline-offset: 3px;
+  }
+  input::placeholder {
+    color: var(--pq-placeholder);
   }
 }
 
-.font-serif {
-  font-family: var(--font-fraunces), "Times New Roman", serif;
+/* Press Start 2P — chunky pixel type for headings, labels and buttons. */
+.font-press {
+  font-family: var(--font-press-start), ui-monospace, monospace;
 }
 
-/* PosterQuest poster reveal cross-fade */
-@keyframes cn-shimmer {
+/* CRT scanline sheet laid over the whole viewport. */
+.pq-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0.22) 0px,
+    rgba(0, 0, 0, 0.22) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: multiply;
+}
+
+/* Tube vignette: darkens the corners like a curved CRT. */
+.pq-vignette {
+  box-shadow: inset 0 0 220px rgba(0, 0, 0, 0.85);
+}
+
+/* Arcade marquee stripe that separates the board from the footer. */
+.pq-marquee {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--pq-cyan) 0 16px,
+    var(--pq-red) 16px 32px,
+    var(--pq-green) 32px 48px,
+    var(--pq-amber) 48px 64px
+  );
+  opacity: 0.55;
+}
+
+/* Blinking terminal caret next to the eyebrow label. */
+@keyframes pq-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+.pq-caret {
+  animation: pq-blink 1s steps(1, end) infinite;
+}
+
+/* Hard-shadow press: the button physically moves into its own shadow. */
+.pq-press {
+  transition:
+    transform 0.08s steps(2),
+    box-shadow 0.08s steps(2),
+    border-color 0.1s steps(2),
+    color 0.1s steps(2);
+}
+
+/* Arcade buttons: the face slides into its own hard shadow when pressed. */
+.pq-btn {
+  font-family: var(--font-press-start), ui-monospace, monospace;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition:
+    transform 0.08s steps(2),
+    box-shadow 0.08s steps(2),
+    border-color 0.1s steps(2),
+    color 0.1s steps(2);
+}
+.pq-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.pq-btn--primary {
+  color: var(--pq-bg);
+  background: var(--pq-amber);
+  border: none;
+  box-shadow: 6px 6px 0 var(--pq-amber-shadow);
+}
+.pq-btn--primary:hover:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0 var(--pq-amber-shadow);
+}
+.pq-btn--primary:active:not(:disabled) {
+  transform: translate(6px, 6px);
+  box-shadow: 0 0 0 var(--pq-amber-shadow);
+}
+
+.pq-btn--ghost {
+  color: var(--pq-text);
+  background: var(--pq-panel-2);
+  border: 4px solid var(--pq-line);
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.5);
+}
+.pq-btn--ghost:hover:not(:disabled) {
+  transform: translate(3px, 3px);
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+  border-color: var(--pq-amber);
+}
+.pq-btn--ghost:active:not(:disabled) {
+  transform: translate(6px, 6px);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.5);
+}
+
+/* Compact ghost variant used in the header strip. */
+.pq-btn--sm {
+  color: var(--pq-meta-text);
+  background: var(--pq-meta-panel);
+  border: 3px solid var(--pq-meta-line);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
+}
+.pq-btn--sm:hover:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55);
+  border-color: var(--pq-green);
+  color: var(--pq-green);
+}
+
+/* Text-only action: dashed underline that lights up on hover. */
+.pq-link-btn {
+  font-family: var(--font-vt323), ui-monospace, monospace;
+  color: var(--pq-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px dashed var(--pq-line);
+  padding: 0 0 3px;
+  cursor: pointer;
+  transition: color 0.1s steps(2);
+}
+.pq-link-btn:hover:not(:disabled) {
+  color: var(--pq-amber);
+}
+.pq-link-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Modal dismiss [X]. */
+.pq-close {
+  font-family: var(--font-press-start), ui-monospace, monospace;
+  color: var(--pq-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.1s steps(2);
+}
+.pq-close:hover {
+  color: var(--pq-red);
+}
+
+/* Loading state for the poster cell while a frame is being pixelated. */
+@keyframes pq-scan {
   0% {
-    background-position: -200% 0;
+    background-position: 0 0;
   }
   100% {
-    background-position: 200% 0;
+    background-position: 0 12px;
   }
 }
-.cn-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--cn-bg-ink) 0%,
-    #1a1614 50%,
-    var(--cn-bg-ink) 100%
+.pq-loading {
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--pq-panel-2) 0 6px,
+    var(--pq-panel) 6px 12px
   );
-  background-size: 200% 100%;
-  animation: cn-shimmer 1.6s ease-in-out infinite;
+  animation: pq-scan 0.6s steps(3, end) infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

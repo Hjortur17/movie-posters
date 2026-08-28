@@ -16,12 +16,13 @@ import { deriveStats } from "@/lib/stats";
 import type { Movie, MovieSearchResult } from "@/lib/tmdb";
 import { getDailyMovie, getMovieDetails, getPosterUrl } from "@/lib/tmdb";
 import { getAnonymousId } from "@/lib/user";
-import { GuessList } from "./GuessList";
+import { GuessList, GuessPips } from "./GuessList";
 import { MoviePoster } from "./MoviePoster";
 import { MovieSearch } from "./MovieSearch";
 import { ScoreDisplay } from "./ScoreDisplay";
 import { TopBar } from "./TopBar";
 import { UserStats } from "./UserStats";
+import Link from "next/link";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
@@ -34,6 +35,7 @@ export const GameBoard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statsOpen, setStatsOpen] = useState(false);
+  const [resultDismissed, setResultDismissed] = useState(false);
   const [currentStreak, setCurrentStreak] = useState<number | null>(null);
 
   const today = new Date();
@@ -112,6 +114,8 @@ export const GameBoard = () => {
         setGameState(state);
         setCurrentMovie(movie);
         setPosterUrl(url);
+        // A game restored as already-finished shouldn't slam the modal open on load.
+        setResultDismissed(state.isComplete);
 
         // DO NOT preload the original image - only pixelated versions should be loaded
       } catch (err) {
@@ -204,8 +208,22 @@ export const GameBoard = () => {
     await persistAndMaybeSubmit(skipGuess(gameState));
   }, [gameState, persistAndMaybeSubmit]);
 
+  const finished = Boolean(gameState?.isComplete);
+  const guessesMade = gameState?.currentGuess ?? 0;
+  const resultOpen = finished && !resultDismissed && !statsOpen;
+
   return (
-    <div className="flex min-h-screen flex-col px-5 pb-8 pt-7 sm:px-10">
+    <div className="relative flex min-h-dvh flex-col overflow-x-hidden bg-pq-bg text-pq-text lg:h-dvh lg:overflow-hidden">
+      {/* CRT overlays */}
+      <div
+        aria-hidden
+        className="pq-scanlines pointer-events-none fixed inset-0 z-[60]"
+      />
+      <div
+        aria-hidden
+        className="pq-vignette pointer-events-none fixed inset-0 z-[61]"
+      />
+
       <TopBar
         puzzleNumber={puzzleNumber}
         dateLabel={dateLabel}
@@ -213,25 +231,27 @@ export const GameBoard = () => {
       />
 
       {error ? (
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 items-center justify-center p-8">
           <div className="text-center">
-            <div className="mb-2 text-lg text-crimson">
-              Couldn&apos;t load today&apos;s poster
+            <div className="mb-3 font-press text-xs leading-[1.6] tracking-[1px] text-pq-red">
+              COULDN&apos;T LOAD TODAY&apos;S POSTER
             </div>
-            <div className="text-sm text-cn-dim">{error}</div>
+            <div className="mb-6 text-[19px] tracking-[1px] text-pq-muted">
+              {error}
+            </div>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="mt-4 bg-amber px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-(--cn-bg) hover:bg-amber-hover"
+              className="pq-btn pq-btn--primary px-5 py-3.5 text-[10px]"
             >
-              Retry
+              ↺ RETRY
             </button>
           </div>
         </div>
       ) : (
-        <div className="grid flex-1 items-center gap-14 py-10 lg:grid-cols-[1fr_1.05fr]">
+        <div className="mx-auto grid w-full max-w-[1240px] flex-1 items-center gap-8 px-5 py-[clamp(10px,2.4vh,28px)] sm:px-10 lg:min-h-0 lg:grid-cols-[minmax(240px,0.72fr)_minmax(340px,1fr)] lg:gap-[clamp(24px,3vw,44px)] lg:overflow-hidden">
           {/* Poster column */}
-          <div className="flex justify-center">
+          <div className="flex flex-col lg:min-h-0">
             <MoviePoster
               imageUrl={posterUrl}
               pixelationLevel={
@@ -241,65 +261,123 @@ export const GameBoard = () => {
                     : getPixelationLevel(gameState.currentGuess)
                   : 80
               }
-              guessNumber={gameState ? gameState.currentGuess + 1 : 1}
+              guessNumber={guessesMade + 1}
+              livesLeft={5 - guessesMade}
             />
+
+            {gameState && (
+              <div className="mt-[clamp(8px,1.6vh,16px)]">
+                <GuessPips
+                  gameState={gameState}
+                  correctMovie={currentMovie ?? undefined}
+                />
+              </div>
+            )}
+            <div className="mt-[clamp(6px,1.2vh,10px)] text-[17px] leading-[1.25] tracking-[1px] text-pq-faint lg:text-[clamp(14px,2.2vh,18px)]">
+              EVERY GUESS SHARPENS THE POSTER &amp; DROPS THE PIXELATION.
+            </div>
           </div>
 
-          {/* Right column */}
-          <div className="flex w-full max-w-[480px] flex-col gap-[22px]">
-            <div>
-              <div className="mb-2.5 text-[11px] uppercase tracking-[0.22em] text-amber">
-                Today&apos;s poster
-              </div>
-              <h1 className="font-serif text-[52px] font-medium leading-[1.02] tracking-[-0.015em] text-cn-text">
-                Name the <em className="italic text-amber">movie</em> behind the
-                pixels.
-              </h1>
-              <p className="mt-3.5 max-w-[420px] text-[14.5px] leading-[1.55] text-cn-dim">
-                Five guesses. Each one sharpens the image. Type a title or skip
-                to peel away another layer.
-              </p>
+          {/* Board column */}
+          <div className="flex w-full max-w-[560px] flex-col justify-center lg:h-full lg:min-h-0">
+            <div className="mb-[clamp(6px,1.4vh,16px)] flex items-center gap-2.5">
+              <div aria-hidden className="h-2.5 w-2.5 bg-pq-amber" />
+              <span className="font-press text-[10px] tracking-[2px] text-pq-amber">
+                TODAY&apos;S POSTER
+              </span>
+              <span aria-hidden className="pq-caret h-[15px] w-2 bg-pq-amber" />
             </div>
 
+            <h1 className="m-0 mb-[clamp(4px,0.9vh,8px)] font-press text-[15px] leading-[1.5] text-pq-text [text-shadow:4px_4px_0_#251C31] lg:text-[clamp(13px,2.5vh,21px)]">
+              Name the
+            </h1>
+            <h1 className="m-0 mb-[clamp(8px,1.7vh,16px)] font-press text-[15px] leading-[1.5] text-pq-amber [text-shadow:4px_4px_0_#3A2A05] lg:text-[clamp(13px,2.5vh,21px)]">
+              film behind the pixels.
+            </h1>
+
+            <p className="m-0 mb-[clamp(6px,1.5vh,18px)] max-w-[46ch] text-[19px] leading-[1.35] text-pq-dim text-pretty lg:text-[clamp(13px,2.3vh,21px)]">
+              Five guesses. 80% pixelated down to 0% — the poster is the only
+              clue you get. New movie at midnight UTC.
+            </p>
+
             {isLoading || !gameState || !currentMovie ? (
-              <div className="py-8 text-sm uppercase tracking-[0.14em] text-cn-faint">
-                Loading today&apos;s movie…
+              <div className="py-8 font-press text-[10px] tracking-[1px] text-pq-faint">
+                LOADING TODAY&apos;S MOVIE…
               </div>
             ) : (
               <>
-                <GuessList gameState={gameState} correctMovie={currentMovie} />
+                <div className="mb-[clamp(6px,1.5vh,18px)]">
+                  <GuessList
+                    gameState={gameState}
+                    correctMovie={currentMovie}
+                  />
+                </div>
 
-                <MovieSearch
-                  onSelect={handleMovieSelect}
-                  disabled={gameState.isComplete}
-                />
+                {finished ? (
+                  <button
+                    type="button"
+                    onClick={() => setResultDismissed(false)}
+                    className="pq-btn pq-btn--ghost self-start px-5 py-3.5 text-[10px]"
+                  >
+                    SEE RESULT
+                  </button>
+                ) : (
+                  <MovieSearch onSelect={handleMovieSelect} />
+                )}
 
-                <div className="flex items-center justify-between text-xs text-cn-faint">
+                <div className="mt-[clamp(6px,1.3vh,16px)] flex flex-wrap items-center justify-between gap-4 text-[18px] tracking-[1px] text-pq-faint lg:text-[clamp(13px,2.1vh,19px)]">
                   <button
                     type="button"
                     onClick={handleSkip}
-                    disabled={gameState.isComplete}
-                    className="cursor-pointer underline decoration-cn-faint underline-offset-[3px] transition-colors hover:text-cn-dim disabled:cursor-not-allowed disabled:opacity-40"
+                    disabled={finished}
+                    className="pq-link-btn text-xl tracking-[1px]"
                   >
-                    Skip — sharpen anyway
+                    SKIP — REVEAL ANYWAY
                   </button>
                   <span>
-                    Streak ·{" "}
-                    <span className="text-cn-text">
-                      {currentStreak ?? 0} days
+                    STREAK ·{" "}
+                    <span className="text-pq-amber">
+                      {currentStreak ?? 0} DAYS
                     </span>
                   </span>
                 </div>
-
-                <ScoreDisplay
-                  gameState={gameState}
-                  correctMovie={currentMovie}
-                  onOpenStats={() => setStatsOpen(true)}
-                />
               </>
             )}
           </div>
         </div>
+      )}
+
+      {/* Arcade marquee stripe + footer */}
+      <div aria-hidden className="pq-marquee h-2 flex-none" />
+      <div className="flex flex-none flex-wrap items-center justify-between gap-4 bg-pq-footer px-5 py-[clamp(8px,1.5vh,14px)] font-press text-[8px] tracking-[1px] text-pq-faint sm:px-10">
+        <span>5 GUESSES · NEW MOVIE EVERY MIDNIGHT UTC</span>
+        <Link
+          href="https://hjorturfreyr.com"
+          className="text-pq-faint hover:text-pq-amber"
+        >
+          CREATOR HJÖRTUR FREYR
+        </Link>
+        <a
+          href="https://www.themoviedb.org"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-pq-faint hover:text-pq-amber"
+        >
+          POSTERS BY TMDB
+        </a>
+      </div>
+
+      {gameState && currentMovie && (
+        <ScoreDisplay
+          gameState={gameState}
+          correctMovie={currentMovie}
+          open={resultOpen}
+          onOpenChange={(open) => setResultDismissed(!open)}
+          onOpenStats={() => {
+            setResultDismissed(true);
+            setStatsOpen(true);
+          }}
+        />
       )}
 
       <UserStats

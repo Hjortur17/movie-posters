@@ -8,6 +8,7 @@ interface MoviePosterProps {
   pixelationLevel: number;
   alt?: string;
   guessNumber?: number; // 1-based current guess, for the caption row
+  livesLeft?: number; // hearts shown in the frame header
 }
 
 export const MoviePoster = ({
@@ -15,6 +16,7 @@ export const MoviePoster = ({
   pixelationLevel,
   alt = "Movie poster",
   guessNumber,
+  livesLeft = 5,
 }: MoviePosterProps) => {
   const [pixelatedUrl, setPixelatedUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,75 +65,83 @@ export const MoviePoster = ({
   const imageSrc = pixelatedUrl || (pixelationLevel === 0 ? imageUrl : null);
   const showPlaceholder = !imageUrl || isLoading || !imageSrc;
 
-  return (
-    <div className="relative">
-      {/* Amber spotlight glow behind the frame */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -inset-x-[60px] -inset-y-10 rounded-full"
-        style={{
-          background:
-            "radial-gradient(ellipse, rgba(232,176,74,0.10) 0%, transparent 60%)",
-          filter: "blur(20px)",
-        }}
-      />
+  const revealed = pixelationLevel === 0;
+  const zoomLabel = revealed ? "REVEALED" : `${pixelationLevel}% PIXELATED`;
+  const guessLabel = revealed
+    ? "FULL POSTER"
+    : `GUESS ${Math.min(guessNumber ?? 1, 5)} / 5`;
 
-      {/* Frame */}
-      <div
-        className="relative border border-line-strong bg-ink p-1.5"
-        style={{
-          boxShadow:
-            "0 30px 60px -20px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(255,255,255,0.03)",
-        }}
-      >
-        <div className="relative h-[480px] w-[320px] max-w-full overflow-hidden bg-black">
-          {showPlaceholder ? (
-            <div className="cn-shimmer flex h-full w-full items-center justify-center">
-              <span className="text-xs uppercase tracking-[0.14em] text-cn-faint">
-                {!imageUrl ? "No poster" : "Developing…"}
-              </span>
-            </div>
-          ) : (
-            <>
-              {/** biome-ignore lint/performance/noImgElement: pixelated data URL */}
-              <img
-                src={imageSrc}
-                alt={alt}
-                className="h-full w-full object-cover transition-opacity duration-300"
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[210px] border-4 border-pq-line bg-pq-panel p-3.5 sm:max-w-[240px] lg:max-w-[min(100%,calc(30vh+40px))]"
+      style={{ boxShadow: "12px 12px 0 rgba(0,0,0,0.6)" }}
+    >
+      {/* Frame header: filename + remaining lives */}
+      <div className="mb-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-[7px] tracking-[1px] text-pq-muted sm:text-[8px]">
+        <span>POSTER.JPG</span>
+        <span className="flex items-center gap-[3px]">
+          {Array.from({ length: 5 }, (_, i) => (
+            <span
+              key={`heart-${i}`}
+              className="size-3 sm:size-3.75"
+              style={{
+                backgroundColor:
+                  i < livesLeft ? "var(--pq-red)" : "var(--pq-locked)",
+                maskImage: "url(/heart.svg)",
+                WebkitMaskImage: "url(/heart.svg)",
+                maskSize: "contain",
+                WebkitMaskSize: "contain",
+                maskRepeat: "no-repeat",
+                WebkitMaskRepeat: "no-repeat",
+                maskPosition: "center",
+                WebkitMaskPosition: "center",
+              }}
+            />
+          ))}
+        </span>
+      </div>
+
+      <div className="relative aspect-[2/3] w-full overflow-hidden bg-pq-bg">
+        {showPlaceholder ? (
+          <div className="pq-loading flex h-full w-full items-center justify-center">
+            <span className="font-press text-[8px] tracking-[1px] text-pq-faint">
+              {!imageUrl ? "NO POSTER" : "LOADING…"}
+            </span>
+          </div>
+        ) : (
+          <>
+            {/** biome-ignore lint/performance/noImgElement: pixelated data URL */}
+            <img
+              src={imageSrc}
+              alt={alt}
+              className="h-full w-full object-cover"
+              style={{ imageRendering: revealed ? "auto" : "pixelated" }}
+              loading="eager"
+              fetchPriority="high"
+              onError={() => {
+                if (pixelationLevel > 0) setIsLoading(true);
+              }}
+            />
+            {/* Safety overlay: additional blur protection in case pixelation fails */}
+            {pixelationLevel > 0 && (
+              <div
+                className="pointer-events-none absolute inset-0"
                 style={{
-                  imageRendering: pixelationLevel === 0 ? "auto" : "pixelated",
-                }}
-                loading="eager"
-                fetchPriority="high"
-                onError={() => {
-                  if (pixelationLevel > 0) setIsLoading(true);
+                  backdropFilter: "blur(5px)",
+                  WebkitBackdropFilter: "blur(5px)",
+                  mixBlendMode: "multiply",
+                  opacity: 0.3,
                 }}
               />
-              {/* Safety overlay: additional blur protection in case pixelation fails */}
-              {pixelationLevel > 0 && (
-                <div
-                  className="pointer-events-none absolute inset-0"
-                  style={{
-                    backdropFilter: "blur(5px)",
-                    WebkitBackdropFilter: "blur(5px)",
-                    mixBlendMode: "multiply",
-                    opacity: 0.3,
-                  }}
-                />
-              )}
-            </>
-          )}
-        </div>
+            )}
+          </>
+        )}
+      </div>
 
-        {/* Caption row */}
-        <div className="flex items-center justify-between px-1 pb-0.5 pt-2.5 text-[10px] uppercase tracking-[0.14em] text-cn-faint">
-          <span>Now showing</span>
-          <span>
-            {guessNumber && pixelationLevel > 0
-              ? `Guess ${Math.min(guessNumber, 5)} / 5`
-              : "Revealed"}
-          </span>
-        </div>
+      {/* Frame footer: how blocky it is right now + which guess we're on */}
+      <div className="mt-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-[7px] tracking-[1px] text-pq-muted sm:text-[8px]">
+        <span>{zoomLabel}</span>
+        <span className="text-pq-amber">{guessLabel}</span>
       </div>
     </div>
   );

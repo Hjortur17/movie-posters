@@ -17,12 +17,37 @@ const vt323 = VT323({
   display: "swap",
 });
 
+const title = "PosterQuest — Name the film behind the pixels";
+const description =
+  "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!";
+
 export const metadata: Metadata = {
-  title: "PosterQuest — Name the film behind the pixels",
-  description:
-    "Guess the movie from the pixelated poster. You get 5 guesses, and the image gets clearer with each one!",
+  metadataBase: new URL("https://posterquest.hjorturfreyr.com"),
+  title,
+  description,
   icons: {
     icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+  },
+  openGraph: {
+    type: "website",
+    siteName: "PosterQuest",
+    url: "/",
+    title,
+    description,
+    images: [
+      {
+        url: "/og.jpg",
+        width: 2400,
+        height: 1260,
+        alt: title,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/og.jpg"],
   },
 };
 

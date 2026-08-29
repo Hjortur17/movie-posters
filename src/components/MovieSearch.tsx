@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { type MovieSearchResult, searchMovies } from "@/lib/tmdb";
+import { cn } from "@/lib/utils";
 
 interface MovieSearchProps {
   onSelect: (movie: MovieSearchResult) => void;
@@ -111,7 +112,7 @@ export const MovieSearch = ({
           ref={inputRef}
           type="text"
           placeholder="SEARCH A MOVIE TITLE..."
-          className="min-w-[200px] flex-1 border-4 border-pq-line bg-pq-panel px-4 py-[clamp(6px,1.3vh,12px)] text-[19px] tracking-[1px] lg:text-[clamp(16px,2.6vh,23px)] text-pq-text outline-none disabled:opacity-50"
+          className="min-w-[200px] flex-1 border-4 border-pq-line bg-pq-panel px-4 py-[clamp(6px,1.3vh,12px)] text-body-md text-pq-text tracking-pq-1 outline-none disabled:opacity-50 lg:text-fluid-xl"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -126,7 +127,7 @@ export const MovieSearch = ({
           type="button"
           onClick={submitTopPick}
           disabled={disabled || isLoading || suggestions.length === 0}
-          className="pq-btn pq-btn--primary px-[22px] py-[clamp(9px,1.7vh,16px)] text-[11px]"
+          className="pq-btn pq-btn--primary px-[22px] py-[clamp(9px,1.7vh,16px)] text-press-lg"
         >
           {isLoading ? "…" : "▶ GUESS"}
         </button>
@@ -137,23 +138,23 @@ export const MovieSearch = ({
           ref={suggestionsRef}
           // Opens upward: the input sits low in the fixed-height board, so a
           // downward menu would be clipped by the footer.
-          className="absolute bottom-full z-50 mb-1.5 max-h-60 w-full overflow-auto border-4 border-pq-line bg-pq-panel"
-          style={{ boxShadow: "8px -8px 0 rgba(0,0,0,0.6)" }}
+          className="absolute bottom-full z-50 mb-1.5 max-h-60 w-full overflow-auto border-4 border-pq-line bg-pq-panel shadow-pq-menu"
         >
           {suggestions.map((movie, index) => (
             <button
               key={movie.id}
               type="button"
-              className={`block w-full cursor-pointer border-b-2 border-pq-line-dim px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-pq-active-bg focus:outline-none ${
-                index === selectedIndex ? "bg-pq-active-bg" : ""
-              }`}
+              className={cn(
+                "block w-full cursor-pointer border-pq-line-dim border-b-2 px-4 py-2.5 text-left transition-colors last:border-b-0 hover:bg-pq-active-bg",
+                index === selectedIndex && "bg-pq-active-bg",
+              )}
               onClick={() => handleSelect(movie)}
             >
-              <span className="text-[19px] tracking-[1px] text-pq-text">
+              <span className="text-body-md text-pq-text tracking-pq-1">
                 {movie.title.toUpperCase()}
               </span>
               {movie.release_date && (
-                <span className="ml-2 text-[17px] text-pq-muted">
+                <span className="ml-2 text-body-xs text-pq-muted">
                   ({new Date(movie.release_date).getFullYear()})
                 </span>
               )}

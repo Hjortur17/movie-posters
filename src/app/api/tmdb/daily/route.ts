@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   // Try to fetch from database first (unless forceNew is true)
   if (!forceNew) {
     try {
-      const date = new Date(dateString + "T00:00:00Z");
+      const date = new Date(`${dateString}T00:00:00Z`);
       const cachedMovie = await getDailyMovieFromDB(date);
       if (cachedMovie) {
         return NextResponse.json(cachedMovie);

@@ -20,6 +20,14 @@
       "recommended": true,
       "suspicious": {
         "noUnknownAtRules": "off"
+      },
+      "nursery": {
+        "useSortedClasses": {
+          "level": "warn",
+          "options": {
+            "functions": ["cn"]
+          }
+        }
       }
     },
     "domains": {

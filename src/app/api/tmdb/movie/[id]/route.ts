@@ -3,13 +3,13 @@ import { type NextRequest, NextResponse } from "next/server";
 const TMDB_API_BASE = "https://api.themoviedb.org/3";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
   const movieId = parseInt(id, 10);
 
-  if (isNaN(movieId)) {
+  if (Number.isNaN(movieId)) {
     return NextResponse.json({ error: "Invalid movie ID" }, { status: 400 });
   }
 

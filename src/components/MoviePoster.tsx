@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { pixelateImage } from "@/lib/pixelate";
+import { cn } from "@/lib/utils";
 
 interface MoviePosterProps {
   imageUrl: string | null;
@@ -10,6 +11,21 @@ interface MoviePosterProps {
   guessNumber?: number; // 1-based current guess, for the caption row
   livesLeft?: number; // hearts shown in the frame header
 }
+
+/**
+ * Pixel heart, inlined rather than loaded from /public so it can be tinted with
+ * a plain text-colour utility instead of a CSS mask.
+ */
+const HeartIcon = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    aria-hidden="true"
+    className={className}
+  >
+    <path d="M13 22h-2v-2h2v2Zm-2-2H9v-2h2v2Zm4 0h-2v-2h2v2Zm-6-2H7v-2h2v2Zm8 0h-2v-2h2v2ZM7 16H5v-2h2v2Zm12 0h-2v-2h2v2ZM5 14H3v-2h2v2Zm16 0h-2v-2h2v2ZM3 12H1V6h2v6Zm20 0h-2V6h2v6ZM13 8h-2V6h2v2ZM5 6H3V4h2v2Zm6 0H9V4h2v2Zm4 0h-2V4h2v2Zm6 0h-2V4h2v2ZM9 4H5V2h4v2Zm10 0h-4V2h4v2Z" />
+  </svg>
+);
 
 export const MoviePoster = ({
   imageUrl,
@@ -72,30 +88,19 @@ export const MoviePoster = ({
     : `GUESS ${Math.min(guessNumber ?? 1, 5)} / 5`;
 
   return (
-    <div
-      className="relative mx-auto w-full max-w-[210px] border-4 border-pq-line bg-pq-panel p-3.5 sm:max-w-[240px] lg:max-w-[min(100%,calc(30vh+40px))]"
-      style={{ boxShadow: "12px 12px 0 rgba(0,0,0,0.6)" }}
-    >
+    <div className="relative mx-auto w-full max-w-[210px] border-4 border-pq-line bg-pq-panel p-3.5 shadow-pq-frame sm:max-w-[240px] lg:max-w-[min(100%,calc(30vh+40px))]">
       {/* Frame header: filename + remaining lives */}
-      <div className="mb-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-[7px] tracking-[1px] text-pq-muted sm:text-[8px]">
+      <div className="mb-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-pq-muted text-press-2xs tracking-pq-1 sm:text-press-xs">
         <span>POSTER.JPG</span>
         <span className="flex items-center gap-[3px]">
           {Array.from({ length: 5 }, (_, i) => (
-            <span
+            <HeartIcon
+              // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 life slots, index is the heart identity
               key={`heart-${i}`}
-              className="size-3 sm:size-3.75"
-              style={{
-                backgroundColor:
-                  i < livesLeft ? "var(--pq-red)" : "var(--pq-locked)",
-                maskImage: "url(/heart.svg)",
-                WebkitMaskImage: "url(/heart.svg)",
-                maskSize: "contain",
-                WebkitMaskSize: "contain",
-                maskRepeat: "no-repeat",
-                WebkitMaskRepeat: "no-repeat",
-                maskPosition: "center",
-                WebkitMaskPosition: "center",
-              }}
+              className={cn(
+                "size-3 sm:size-3.75",
+                i < livesLeft ? "text-pq-red" : "text-pq-locked",
+              )}
             />
           ))}
         </span>
@@ -104,7 +109,7 @@ export const MoviePoster = ({
       <div className="relative aspect-[2/3] w-full overflow-hidden bg-pq-bg">
         {showPlaceholder ? (
           <div className="pq-loading flex h-full w-full items-center justify-center">
-            <span className="font-press text-[8px] tracking-[1px] text-pq-faint">
+            <span className="font-press text-pq-faint text-press-xs tracking-pq-1">
               {!imageUrl ? "NO POSTER" : "LOADING…"}
             </span>
           </div>
@@ -114,8 +119,10 @@ export const MoviePoster = ({
             <img
               src={imageSrc}
               alt={alt}
-              className="h-full w-full object-cover"
-              style={{ imageRendering: revealed ? "auto" : "pixelated" }}
+              className={cn(
+                "h-full w-full object-cover",
+                !revealed && "[image-rendering:pixelated]",
+              )}
               loading="eager"
               fetchPriority="high"
               onError={() => {
@@ -124,22 +131,14 @@ export const MoviePoster = ({
             />
             {/* Safety overlay: additional blur protection in case pixelation fails */}
             {pixelationLevel > 0 && (
-              <div
-                className="pointer-events-none absolute inset-0"
-                style={{
-                  backdropFilter: "blur(5px)",
-                  WebkitBackdropFilter: "blur(5px)",
-                  mixBlendMode: "multiply",
-                  opacity: 0.3,
-                }}
-              />
+              <div className="pointer-events-none absolute inset-0 opacity-30 mix-blend-multiply backdrop-blur-[5px]" />
             )}
           </>
         )}
       </div>
 
       {/* Frame footer: how blocky it is right now + which guess we're on */}
-      <div className="mt-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-[7px] tracking-[1px] text-pq-muted sm:text-[8px]">
+      <div className="mt-3 flex items-center justify-between gap-2 whitespace-nowrap font-press text-pq-muted text-press-2xs tracking-pq-1 sm:text-press-xs">
         <span>{zoomLabel}</span>
         <span className="text-pq-amber">{guessLabel}</span>
       </div>

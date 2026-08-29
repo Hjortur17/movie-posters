@@ -11,7 +11,13 @@ import { copyShareToClipboard, getShareText } from "@/lib/share";
 import { type DerivedStats, deriveStats } from "@/lib/stats";
 import type { Movie } from "@/lib/tmdb";
 import { getAnonymousId } from "@/lib/user";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface UserStatsProps {
   isOpen: boolean;
@@ -34,17 +40,15 @@ const EMPTY: DerivedStats = {
 const Tile = ({
   value,
   label,
-  color,
+  className,
 }: {
   value: string;
   label: string;
-  color: string;
+  className: string;
 }) => (
   <div className="border-[3px] border-pq-line-dim bg-pq-panel-2 px-2 py-3.5 text-center">
-    <div className="font-press text-[13px]" style={{ color }}>
-      {value}
-    </div>
-    <div className="mt-1.5 text-[17px] tracking-[1px] text-pq-muted">
+    <div className={cn("font-press text-press-2xl", className)}>{value}</div>
+    <div className="mt-1.5 text-body-xs text-pq-muted tracking-pq-1">
       {label}
     </div>
   </div>
@@ -116,37 +120,37 @@ export const UserStats = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent
-        showClose={false}
-        className="max-h-[90vh] max-w-[520px] overflow-y-auto border-4 border-pq-line bg-pq-panel p-[30px] text-pq-text"
-        style={{ boxShadow: "14px 14px 0 rgba(0,0,0,0.7)" }}
-      >
+      <DialogContent className="max-h-[90vh] max-w-[520px] overflow-y-auto border-4 border-pq-line bg-pq-panel p-[30px] text-pq-text shadow-pq-modal">
         <div className="mb-6 flex items-center justify-between gap-4">
-          <DialogTitle className="font-press text-xs tracking-[2px] text-pq-amber">
+          <DialogTitle className="font-press text-pq-amber text-press-xl tracking-pq-2">
             HIGH SCORES
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Your PosterQuest record: games played, win rate, streaks and guess
+            distribution.
+          </DialogDescription>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close statistics"
-            className="pq-close text-[10px]"
+            className="pq-close text-press-md"
           >
             [X]
           </button>
         </div>
 
         {isLoading && (
-          <div className="py-8 text-center text-[19px] tracking-[1px] text-pq-muted">
+          <div className="py-8 text-center text-body-md text-pq-muted tracking-pq-1">
             LOADING…
           </div>
         )}
 
         {error && (
           <div className="py-8 text-center">
-            <div className="mb-2 font-press text-[10px] tracking-[1px] text-pq-red">
+            <div className="mb-2 font-press text-pq-red text-press-md tracking-pq-1">
               ERROR LOADING STATS
             </div>
-            <div className="text-[19px] text-pq-muted">{error}</div>
+            <div className="text-body-md text-pq-muted">{error}</div>
           </div>
         )}
 
@@ -156,26 +160,26 @@ export const UserStats = ({
               <Tile
                 value={String(stats.played)}
                 label="PLAYED"
-                color="var(--pq-amber)"
+                className="text-pq-amber"
               />
               <Tile
                 value={`${Math.round(stats.winRate)}%`}
                 label="WIN"
-                color="var(--pq-green)"
+                className="text-pq-green"
               />
               <Tile
                 value={String(stats.currentStreak)}
                 label="STREAK"
-                color="var(--pq-amber)"
+                className="text-pq-amber"
               />
               <Tile
                 value={String(stats.longestStreak)}
                 label="BEST"
-                color="var(--pq-red)"
+                className="text-pq-red"
               />
             </div>
 
-            <div className="mb-4 font-press text-[9px] tracking-[2px] text-pq-muted">
+            <div className="mb-4 font-press text-pq-muted text-press-sm tracking-pq-2">
               GUESS DISTRIBUTION
             </div>
             <div className="flex flex-col gap-2.5">
@@ -186,28 +190,26 @@ export const UserStats = ({
                   <div
                     // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 guess slots, index is the row identity
                     key={`guess-slot-${i}`}
-                    className="grid items-center gap-3"
-                    style={{ gridTemplateColumns: "32px 1fr" }}
+                    className="grid grid-cols-[32px_1fr] items-center gap-3"
                   >
-                    <span className="font-press text-[9px] text-pq-faint">
+                    <span className="font-press text-pq-faint text-press-sm">
                       {i + 1}
                     </span>
                     <div className="relative h-[22px] border-2 border-pq-line-dim bg-pq-panel-2">
                       {count > 0 ? (
                         <div
-                          className="flex h-full items-center justify-end pr-2 text-[17px] tracking-[1px] text-pq-bg transition-[width] duration-300 ease-out"
-                          style={{
-                            width: `${Math.max(pct, 12)}%`,
-                            backgroundColor: isModal
-                              ? "var(--pq-amber)"
-                              : "var(--pq-line)",
-                            color: isModal ? "var(--pq-bg)" : "var(--pq-text)",
-                          }}
+                          className={cn(
+                            "flex h-full items-center justify-end pr-2 text-body-xs tracking-pq-1 transition-[width] duration-300 ease-out",
+                            isModal
+                              ? "bg-pq-amber text-pq-bg"
+                              : "bg-pq-line text-pq-text",
+                          )}
+                          style={{ width: `${Math.max(pct, 12)}%` }}
                         >
                           {count}
                         </div>
                       ) : (
-                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[17px] text-pq-faint">
+                        <span className="-translate-y-1/2 absolute top-1/2 left-2 text-body-xs text-pq-faint">
                           0
                         </span>
                       )}
@@ -220,10 +222,10 @@ export const UserStats = ({
             {/* Next drop + share */}
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-[3px] border-pq-line-dim bg-pq-footer p-3.5">
               <div>
-                <div className="font-press text-[8px] tracking-[2px] text-pq-faint">
+                <div className="font-press text-pq-faint text-press-xs tracking-pq-2">
                   NEXT POSTER IN
                 </div>
-                <div className="mt-1.5 font-press text-[13px] tabular-nums text-pq-amber">
+                <div className="mt-1.5 font-press text-pq-amber text-press-2xl tabular-nums">
                   {countdown}
                 </div>
               </div>
@@ -236,7 +238,7 @@ export const UserStats = ({
                     ? "Copy your result"
                     : "Finish today's puzzle to share"
                 }
-                className="pq-btn pq-btn--primary px-5 py-3 text-[10px]"
+                className="pq-btn pq-btn--primary px-5 py-3 text-press-md"
               >
                 {shareCopied ? "✓ COPIED" : "⇪ SHARE"}
               </button>

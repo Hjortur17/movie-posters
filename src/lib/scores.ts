@@ -60,28 +60,3 @@ export async function getUserScores(anonymousId: string): Promise<Score[]> {
 
   return data || [];
 }
-
-export async function getLeaderboard(
-  gameId: string,
-  limit = 10,
-): Promise<Score[]> {
-  if (!supabase) {
-    console.warn("Supabase not configured, returning empty leaderboard");
-    return [];
-  }
-
-  const { data, error } = await supabase
-    .from("scores")
-    .select("*")
-    .eq("game_id", gameId)
-    .order("score", { ascending: false })
-    .order("guess_number", { ascending: true })
-    .limit(limit);
-
-  if (error) {
-    console.error("Error fetching leaderboard:", error);
-    throw error;
-  }
-
-  return data || [];
-}

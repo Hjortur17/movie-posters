@@ -3,6 +3,7 @@
 import type { GameState } from "@/lib/game";
 import { getGuessKind } from "@/lib/guess-kind";
 import type { Movie } from "@/lib/tmdb";
+import { cn } from "@/lib/utils";
 
 interface GuessListProps {
   gameState: GameState;
@@ -11,15 +12,42 @@ interface GuessListProps {
 
 type RowKind = "hit" | "miss" | "link" | "skipped" | "active" | "locked";
 
-/** Left edge bar + status text colour for each row state. */
-const ACCENT: Record<RowKind, string> = {
-  hit: "var(--pq-green)",
-  miss: "var(--pq-red)",
-  link: "var(--pq-amber)",
-  skipped: "var(--pq-skip)",
-  active: "var(--pq-cyan)",
-  locked: "var(--pq-line-dim)",
-};
+/**
+ * Per-state classes for a row: the left edge bar, the status text, and the
+ * matching pip under the poster. Written as whole class names because the
+ * Tailwind scanner only sees complete literal strings — never build these by
+ * interpolating a colour name.
+ */
+const ROW_STYLE: Record<RowKind, { edge: string; label: string; pip: string }> =
+  {
+    hit: {
+      edge: "border-l-pq-green",
+      label: "text-pq-green",
+      pip: "bg-pq-green",
+    },
+    miss: { edge: "border-l-pq-red", label: "text-pq-red", pip: "bg-pq-red" },
+    link: {
+      edge: "border-l-pq-amber",
+      label: "text-pq-amber",
+      pip: "bg-pq-amber",
+    },
+    skipped: {
+      edge: "border-l-pq-skip",
+      label: "text-pq-skip",
+      pip: "bg-pq-skip",
+    },
+    active: {
+      edge: "border-l-pq-cyan",
+      label: "text-pq-cyan",
+      pip: "bg-pq-cyan",
+    },
+    locked: {
+      edge: "border-l-pq-line-dim",
+      label: "text-pq-line-dim",
+      // An untouched slot reads as an empty socket, not as a coloured result.
+      pip: "bg-pq-panel-2",
+    },
+  };
 
 const STATUS_LABEL: Record<RowKind, string> = {
   hit: "HIT",
@@ -59,46 +87,42 @@ export const GuessList = ({ gameState, correctMovie }: GuessListProps) => {
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 guess slots, index is the row identity
             key={`guess-row-${i}`}
-            className="grid min-h-[clamp(24px,4.4vh,44px)] items-center gap-3 border-[3px] px-3.5 py-[clamp(3px,0.7vh,7px)]"
-            style={{
-              gridTemplateColumns: "38px 1fr auto",
-              borderColor: isActive
-                ? "var(--pq-active-line)"
+            className={cn(
+              "grid min-h-[clamp(24px,4.4vh,44px)] grid-cols-[38px_1fr_auto] items-center gap-3 border-[3px] px-3.5 py-[clamp(3px,0.7vh,7px)]",
+              isActive
+                ? "border-pq-active-line bg-pq-active-bg"
                 : isLocked
-                  ? "var(--pq-line-faint)"
-                  : "var(--pq-line-dim)",
-              borderLeft: `8px solid ${ACCENT[kind]}`,
-              backgroundColor: isActive
-                ? "var(--pq-active-bg)"
-                : isLocked
-                  ? "transparent"
-                  : "var(--pq-panel)",
-            }}
+                  ? "border-pq-line-faint bg-transparent"
+                  : "border-pq-line-dim bg-pq-panel",
+              // Keep the left edge after the all-sides border so it wins.
+              "border-l-8",
+              ROW_STYLE[kind].edge,
+            )}
           >
             <span
-              className="font-press text-[11px]"
-              style={{
-                color: isActive
-                  ? "var(--pq-cyan)"
+              className={cn(
+                "font-press text-press-lg",
+                isActive
+                  ? "text-pq-cyan"
                   : isLocked
-                    ? "var(--pq-locked)"
-                    : "var(--pq-faint)",
-              }}
+                    ? "text-pq-locked"
+                    : "text-pq-faint",
+              )}
             >
               {String(i + 1).padStart(2, "0")}
             </span>
 
             <span
-              className="truncate text-[17px] tracking-[1px] lg:text-[clamp(15px,2.5vh,21px)]"
-              style={{
-                color: isActive
-                  ? "var(--pq-cyan)"
+              className={cn(
+                "truncate text-body-xs tracking-pq-1 lg:text-fluid-lg",
+                isActive
+                  ? "text-pq-cyan"
                   : isLocked
-                    ? "var(--pq-locked)"
+                    ? "text-pq-locked"
                     : kind === "skipped"
-                      ? "var(--pq-faint)"
-                      : "var(--pq-text)",
-              }}
+                      ? "text-pq-faint"
+                      : "text-pq-text",
+              )}
             >
               {guess && !guess.skipped ? (
                 <>
@@ -117,8 +141,10 @@ export const GuessList = ({ gameState, correctMovie }: GuessListProps) => {
             </span>
 
             <span
-              className="font-press text-[8px] tracking-[2px]"
-              style={{ color: ACCENT[kind] }}
+              className={cn(
+                "font-press text-press-xs tracking-pq-2",
+                ROW_STYLE[kind].label,
+              )}
             >
               {STATUS_LABEL[kind]}
             </span>
@@ -138,11 +164,10 @@ export const GuessPips = ({ gameState, correctMovie }: GuessListProps) => (
         <div
           // biome-ignore lint/suspicious/noArrayIndexKey: fixed 5 guess slots, index is the pip identity
           key={`pip-${i}`}
-          className="h-3 flex-1 border-2 border-pq-line-dim"
-          style={{
-            backgroundColor:
-              kind === "locked" ? "var(--pq-panel-2)" : ACCENT[kind],
-          }}
+          className={cn(
+            "h-3 flex-1 border-2 border-pq-line-dim",
+            ROW_STYLE[kind].pip,
+          )}
         />
       );
     })}

@@ -22,7 +22,6 @@ import { MovieSearch } from "./MovieSearch";
 import { ScoreDisplay } from "./ScoreDisplay";
 import { TopBar } from "./TopBar";
 import { UserStats } from "./UserStats";
-import Link from "next/link";
 
 const GAME_STATE_KEY = "posterquest_game_state";
 const CURRENT_MOVIE_KEY = "posterquest_current_movie";
@@ -233,16 +232,16 @@ export const GameBoard = () => {
       {error ? (
         <div className="flex flex-1 items-center justify-center p-8">
           <div className="text-center">
-            <div className="mb-3 font-press text-xs leading-[1.6] tracking-[1px] text-pq-red">
+            <div className="mb-3 font-press text-pq-red text-press-xl leading-[1.6] tracking-pq-1">
               COULDN&apos;T LOAD TODAY&apos;S POSTER
             </div>
-            <div className="mb-6 text-[19px] tracking-[1px] text-pq-muted">
+            <div className="mb-6 text-body-md text-pq-muted tracking-pq-1">
               {error}
             </div>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="pq-btn pq-btn--primary px-5 py-3.5 text-[10px]"
+              className="pq-btn pq-btn--primary px-5 py-3.5 text-press-md"
             >
               ↺ RETRY
             </button>
@@ -273,7 +272,7 @@ export const GameBoard = () => {
                 />
               </div>
             )}
-            <div className="mt-[clamp(6px,1.2vh,10px)] text-[17px] leading-[1.25] tracking-[1px] text-pq-faint lg:text-[clamp(14px,2.2vh,18px)]">
+            <div className="mt-[clamp(6px,1.2vh,10px)] text-body-xs text-pq-faint leading-[1.25] tracking-pq-1 lg:text-fluid-2xs">
               EVERY GUESS SHARPENS THE POSTER &amp; DROPS THE PIXELATION.
             </div>
           </div>
@@ -282,26 +281,26 @@ export const GameBoard = () => {
           <div className="flex w-full max-w-[560px] flex-col justify-center lg:h-full lg:min-h-0">
             <div className="mb-[clamp(6px,1.4vh,16px)] flex items-center gap-2.5">
               <div aria-hidden className="h-2.5 w-2.5 bg-pq-amber" />
-              <span className="font-press text-[10px] tracking-[2px] text-pq-amber">
+              <span className="font-press text-pq-amber text-press-md tracking-pq-2">
                 TODAY&apos;S POSTER
               </span>
               <span aria-hidden className="pq-caret h-[15px] w-2 bg-pq-amber" />
             </div>
 
-            <h1 className="m-0 mb-[clamp(4px,0.9vh,8px)] font-press text-[15px] leading-[1.5] text-pq-text [text-shadow:4px_4px_0_#251C31] lg:text-[clamp(13px,2.5vh,21px)]">
+            <h1 className="m-0 mb-[clamp(4px,0.9vh,8px)] font-press text-pq-text text-press-3xl leading-[1.5] [text-shadow:4px_4px_0_#251C31] lg:text-fluid-md">
               Name the
             </h1>
-            <h1 className="m-0 mb-[clamp(8px,1.7vh,16px)] font-press text-[15px] leading-[1.5] text-pq-amber [text-shadow:4px_4px_0_#3A2A05] lg:text-[clamp(13px,2.5vh,21px)]">
+            <h1 className="m-0 mb-[clamp(8px,1.7vh,16px)] font-press text-pq-amber text-press-3xl leading-[1.5] [text-shadow:4px_4px_0_#3A2A05] lg:text-fluid-md">
               film behind the pixels.
             </h1>
 
-            <p className="m-0 mb-[clamp(6px,1.5vh,18px)] max-w-[46ch] text-[19px] leading-[1.35] text-pq-dim text-pretty lg:text-[clamp(13px,2.3vh,21px)]">
+            <p className="m-0 mb-[clamp(6px,1.5vh,18px)] max-w-[46ch] text-pretty text-body-md text-pq-dim leading-[1.35] lg:text-fluid-sm">
               Five guesses. 80% pixelated down to 0% — the poster is the only
               clue you get. New movie at midnight UTC.
             </p>
 
             {isLoading || !gameState || !currentMovie ? (
-              <div className="py-8 font-press text-[10px] tracking-[1px] text-pq-faint">
+              <div className="py-8 font-press text-pq-faint text-press-md tracking-pq-1">
                 LOADING TODAY&apos;S MOVIE…
               </div>
             ) : (
@@ -317,7 +316,7 @@ export const GameBoard = () => {
                   <button
                     type="button"
                     onClick={() => setResultDismissed(false)}
-                    className="pq-btn pq-btn--ghost self-start px-5 py-3.5 text-[10px]"
+                    className="pq-btn pq-btn--ghost self-start px-5 py-3.5 text-press-md"
                   >
                     SEE RESULT
                   </button>
@@ -325,12 +324,12 @@ export const GameBoard = () => {
                   <MovieSearch onSelect={handleMovieSelect} />
                 )}
 
-                <div className="mt-[clamp(6px,1.3vh,16px)] flex flex-wrap items-center justify-between gap-4 text-[18px] tracking-[1px] text-pq-faint lg:text-[clamp(13px,2.1vh,19px)]">
+                <div className="mt-[clamp(6px,1.3vh,16px)] flex flex-wrap items-center justify-between gap-4 text-body-sm text-pq-faint tracking-pq-1 lg:text-fluid-xs">
                   <button
                     type="button"
                     onClick={handleSkip}
                     disabled={finished}
-                    className="pq-link-btn text-xl tracking-[1px]"
+                    className="pq-link-btn text-body-lg tracking-pq-1"
                   >
                     SKIP — REVEAL ANYWAY
                   </button>
@@ -349,14 +348,16 @@ export const GameBoard = () => {
 
       {/* Arcade marquee stripe + footer */}
       <div aria-hidden className="pq-marquee h-2 flex-none" />
-      <div className="flex flex-none flex-wrap items-center justify-between gap-4 bg-pq-footer px-5 py-[clamp(8px,1.5vh,14px)] font-press text-[8px] tracking-[1px] text-pq-faint sm:px-10">
+      <div className="flex flex-none flex-wrap items-center justify-between gap-4 bg-pq-footer px-5 py-[clamp(8px,1.5vh,14px)] font-press text-pq-faint text-press-xs tracking-pq-1 sm:px-10">
         <span>5 GUESSES · NEW MOVIE EVERY MIDNIGHT UTC</span>
-        <Link
+        <a
           href="https://hjorturfreyr.com"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-pq-faint hover:text-pq-amber"
         >
           CREATOR HJÖRTUR FREYR
-        </Link>
+        </a>
         <a
           href="https://www.themoviedb.org"
           target="_blank"

@@ -9,7 +9,13 @@ import {
   getShareText,
 } from "@/lib/share";
 import type { Movie } from "@/lib/tmdb";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
+import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "./ui/dialog";
 
 interface ScoreDisplayProps {
   gameState: GameState;
@@ -33,7 +39,8 @@ export const ScoreDisplay = ({
   }
 
   const won = gameState.won;
-  const accent = won ? "var(--pq-green)" : "var(--pq-red)";
+  const accentBorder = won ? "border-pq-green" : "border-pq-red";
+  const accentText = won ? "text-pq-green" : "text-pq-red";
   const year = correctMovie.release_date
     ? new Date(correctMovie.release_date).getFullYear()
     : null;
@@ -56,31 +63,34 @@ export const ScoreDisplay = ({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
-        showClose={false}
-        className="max-h-[90vh] max-w-[520px] overflow-y-auto border-4 bg-pq-panel p-[30px] text-pq-text"
-        style={{
-          borderColor: accent,
-          boxShadow: "14px 14px 0 rgba(0,0,0,0.7)",
-        }}
+        className={cn(
+          "max-h-[90vh] max-w-[520px] overflow-y-auto border-4 bg-pq-panel p-[30px] text-pq-text shadow-pq-modal",
+          accentBorder,
+        )}
       >
         <div className="mb-[18px] flex items-start justify-between gap-4">
           <DialogTitle
-            className="font-press text-[15px] leading-[1.5] tracking-[2px]"
-            style={{ color: accent }}
+            className={cn(
+              "font-press text-press-3xl leading-[1.5] tracking-pq-2",
+              accentText,
+            )}
           >
             {won ? "★ NICE RUN" : "GAME OVER"}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Today&apos;s result: the answer, your score, and a shareable grid.
+          </DialogDescription>
           <button
             type="button"
             onClick={() => onOpenChange(false)}
             aria-label="Close result"
-            className="pq-close text-[10px]"
+            className="pq-close text-press-md"
           >
             [X]
           </button>
         </div>
 
-        <div className="mb-2 text-[22px] tracking-[1px] text-pq-dim">
+        <div className="mb-2 text-body-xl text-pq-dim tracking-pq-1">
           THE FILM WAS{" "}
           <span className="text-pq-text">
             {correctMovie.title.toUpperCase()}
@@ -91,16 +101,16 @@ export const ScoreDisplay = ({
             : "BETTER LUCK TOMORROW"}
         </div>
 
-        <div className="mb-5 font-press text-[10px] tracking-[1px] text-pq-amber">
+        <div className="mb-5 font-press text-pq-amber text-press-md tracking-pq-1">
           SCORE {gameState.score} PTS
         </div>
 
         {/* Shareable result card */}
         <div className="mb-[22px] border-[3px] border-pq-line-dim bg-pq-footer p-4">
-          <div className="mb-2.5 font-press text-[8px] tracking-[2px] text-pq-faint">
+          <div className="mb-2.5 font-press text-pq-faint text-press-xs tracking-pq-2">
             #POSTERQUEST #{getShareDayNumber(gameState)}
           </div>
-          <div className="text-[26px] leading-none tracking-[6px]">
+          <div className="text-body-2xl leading-none tracking-pq-6">
             {getShareSquares(gameState, correctMovie).join("")}
           </div>
         </div>
@@ -109,14 +119,14 @@ export const ScoreDisplay = ({
           <button
             type="button"
             onClick={handleShare}
-            className="pq-btn pq-btn--primary px-5 py-3.5 text-[10px]"
+            className="pq-btn pq-btn--primary px-5 py-3.5 text-press-md"
           >
             {copied ? "✓ COPIED" : "⇪ SHARE SCORE"}
           </button>
           <button
             type="button"
             onClick={onOpenStats}
-            className="pq-btn pq-btn--ghost px-[18px] py-2.5 text-[10px]"
+            className="pq-btn pq-btn--ghost px-[18px] py-2.5 text-press-md"
           >
             HIGH SCORES
           </button>
